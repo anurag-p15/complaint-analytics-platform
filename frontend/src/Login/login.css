@@ -1,0 +1,41 @@
+.login-container {
+  min-height: 85vh;
+}
+
+.login-card {
+  background: linear-gradient(270deg,#6b6b6b,#94a3b8);
+  padding: 40px;
+  border-radius: 18px;
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s ease;
+}
+
+.login-card:hover {
+  transform: translateY(-6px);
+}
+
+.login-card>.login-title {
+  font-weight: 700;
+  margin-bottom: 25px;
+  text-align: center;
+  color: #08051e;
+}
+
+
+/* Admin special styling */
+.login-card.admin{
+  background: linear-gradient(135deg, #020617, #0f172a);
+}
+.login-card.admin .login-title {
+  color: #e0f2fe;
+}
+
+.login-card.admin .form-control {
+  background: #020617;
+  color: white;
+  border: 1px solid #334155;
+}
+
+.login-card.admin .form-control::placeholder {
+  color: #94a3b8;
+}

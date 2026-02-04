@@ -1,0 +1,57 @@
+.body-container {
+  max-width: 90%;
+}
+
+.body-text {
+  font-size: 1.15rem;
+  color: #333;
+  line-height: 1.7;
+}
+
+.section {
+  border-radius: 20px;
+  padding: 60px 40px;
+}
+
+.section-light {
+  background: linear-gradient(135deg, #f8fafc, #1f49d2);
+}
+
+.section-accent {
+  background: linear-gradient(135deg, #215457, #e0f2fe);
+}
+
+.section-title {
+  font-weight: 700;
+  font-size: 2rem;
+  color: #0f172a;
+  margin-bottom: 20px;
+}
+
+.section-text {
+  font-size: 1.15rem;
+  line-height: 1.7;
+  color: #334155;
+}
+
+/* SVG styling */
+.landing-svg {
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+}
+
+/* SVG color theming (works if SVG uses currentColor) */
+.primary-svg {
+  color: #2563eb;
+}
+
+.accent-svg {
+  color: #0ea5e9;
+}
+
+/* Subtle hover polish */
+.section:hover {
+  transform: translateY(-4px);
+  transition: all 0.3s ease;
+}

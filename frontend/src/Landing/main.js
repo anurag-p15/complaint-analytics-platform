@@ -1,13 +1,12 @@
 import Navbar from '../Components/navbar';
 import Footer from '../Components/footer';
+import Body from './body';
 
 function Main() {
     return (
         <>
             <Navbar />
-            <div style={{ minHeight: '80vh' }}>
-                {/* Main landing page content goes here */}
-            </div>
+            <Body/>
             <Footer />
         </>
     );

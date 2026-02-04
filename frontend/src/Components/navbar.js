@@ -31,7 +31,7 @@ function Navbar() {
               <a className="nav-link text-white mx-4" href="/">Home</a>
             </li>
             <li className="nav-item">
-              <a className="nav-link text-white mx-4" href="#">Login</a>
+              <a className="nav-link text-white mx-4" href="/login">Login</a>
             </li>
           </ul>
         </div>
