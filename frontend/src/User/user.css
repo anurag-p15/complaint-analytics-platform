@@ -1,0 +1,10 @@
+.user-button {
+  margin: 0 5px;
+  border-radius: 20px;
+}
+
+.user-button button {
+  border-radius: 12px;
+  font-weight: 600;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}

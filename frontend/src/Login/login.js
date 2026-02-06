@@ -8,49 +8,29 @@ function Login() {
         <div className="container login-container d-flex align-items-center">
         <div className="row w-100 g-4">
 
-        {/* User Login */}
-        <div className="col-md-6">
+        {/* Login */}
+        <div className="col-md-12 d-flex justify-content-center">
           <div className="login-card">
-            <h3 className="login-title">User Login</h3>
+            <h3 className="login-title">Login</h3>
+          <form>
+            <input
+              type="text"
+              className="form-control mb-3"
+              placeholder="Name"
+              required
+            />
 
             <input
               type="email"
               className="form-control mb-3"
               placeholder="Email"
-            />
-
-            <input
-              type="name"
-              className="form-control mb-3"
-              placeholder="Name"
-            />
-
-            <button className="btn btn-primary w-100">
-              Login as User
-            </button>
-          </div>
-        </div>
-
-        {/* Admin Login */}
-        <div className="col-md-6">
-          <div className="login-card admin">
-            <h3 className="login-title">Admin Login</h3>
-
-            <input
-              type="email"
-              className="form-control mb-3"
-              placeholder="Admin Email"
-            />
-
-            <input
-              type="password"
-              className="form-control mb-3"
-              placeholder="Password"
+              required
             />
 
             <button className="btn btn-dark w-100">
-              Login as Admin
+              Login
             </button>
+          </form>
           </div>
         </div>
 

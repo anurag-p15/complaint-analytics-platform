@@ -1,0 +1,79 @@
+/* ===== Complaint Card ===== */
+
+.card {
+  background:white;
+  border-radius: 18px;
+  max-width: 90%;
+  margin: auto;
+}
+
+/* Title */
+
+.card h4 {
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 0.5px;
+}
+
+/* Subtitle */
+
+.card p {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 0.95rem;
+}
+
+/* Labels */
+
+.form-label {
+  font-weight: 600;
+  color: white;
+}
+
+/* Inputs */
+
+.form-control,
+.form-select {
+  border-radius: 12px;
+  padding: 12px 14px;
+  border: 1px solid #dfe3e8;
+  transition: all 0.25s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+}
+
+/* Submit Button */
+
+.card .btn-primary {
+  display: block;
+  margin: 0 auto;
+  padding: 10px 30px;
+  font-size: 1rem;
+  border-radius: 14px;
+  font-weight: 600;
+  box-shadow: 0 6px 18px rgba(13, 110, 253, 0.25);
+  transition: all 0.25s ease;
+}
+
+.card .btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(13, 110, 253, 0.35);
+}
+
+/* Row spacing */
+
+.row.mb-3 {
+  margin-bottom: 1.4rem !important;
+}
+
+/* Responsive tweak */
+
+@media (max-width: 768px) {
+  .card {
+    padding: 20px !important;
+  }
+}
