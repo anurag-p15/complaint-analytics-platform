@@ -3,8 +3,8 @@ import Navbar from "../Components/navbar";
 import Footer from "../Components/footer";
 import "./user.css";
 
-import RegisterComplaint from "../Components/RegisterComplaint";
-import PastComplaints from "../Components/PastComplaints";
+import RegisterComplaint from "./RegisterComplaint";
+import PastComplaints from "./PastComplaints";
 
 function User() {
 

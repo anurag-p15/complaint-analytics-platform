@@ -1,0 +1,74 @@
+table,th,tr,td{
+    border:2px solid black;
+}
+th,td{
+    padding:5px;
+}
+th{
+    background-color: rgb(10, 110, 253);
+    color: white;
+}
+/* ===== MODAL OVERLAY ===== */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+/* ===== MODAL CARD ===== */
+
+.feedback-modal {
+  background: white;
+  width: 500px;
+  border-radius: 14px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  animation: popIn 0.25s ease;
+}
+
+/* Header */
+
+.feedback-modal .modal-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+}
+
+.feedback-modal h5 {
+  margin: 0;
+  font-weight: 600;
+}
+
+/* Body */
+
+.feedback-modal .modal-body {
+  padding: 20px;
+}
+
+/* Footer */
+
+.feedback-modal .modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 15px 20px;
+  border-top: 1px solid #eee;
+}
+
+/* Animation */
+
+@keyframes popIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}

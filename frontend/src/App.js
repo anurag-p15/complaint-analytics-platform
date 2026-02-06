@@ -1,3 +1,4 @@
+import Admin from './Admin/admin';
 import './App.css';
 import Main from './Landing/main';
 import Login from './Login/login';
@@ -12,6 +13,7 @@ function App() {
           <Route path="/" element={<Main />} />
           <Route path="/login" element={<Login />} />
           <Route path="/user" element={<User />} />
+          <Route path="/admin" element={<Admin />} />
         </Routes>
       </BrowserRouter>
     </div>
