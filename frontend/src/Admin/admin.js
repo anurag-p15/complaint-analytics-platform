@@ -2,9 +2,8 @@ import { useState, useMemo } from "react";
 import Navbar from "../Components/navbar";
 import Footer from "../Components/footer";
 
-/* ===== PRODUCT DROPDOWN OPTIONS ===== */
+/* ===== PRODUCT OPTIONS ===== */
 const productOptions = [
-  "",
   "Debt Collection",
   "Checking or Savings Account",
   "Credit Card",
@@ -18,7 +17,7 @@ const productOptions = [
   "Payday loan, title loan, personal loan, or advance loan",
 ];
 
-/* ===== INITIAL DATA ===== */
+/* ===== INITIAL COMPLAINT DATA ===== */
 const initialComplaints = [
   {
     id: "90001",
@@ -27,6 +26,7 @@ const initialComplaints = [
     issue: "Unauthorized charge",
     text: "Charged twice for the same transaction.",
     status: "Pending",
+    escalation: "High",
     rating: null,
     feedback: null,
   },
@@ -37,6 +37,7 @@ const initialComplaints = [
     issue: "Delay",
     text: "Loan processing taking too long.",
     status: "Resolved",
+    escalation: "Medium",
     rating: 4,
     feedback: "Resolved quickly by support team.",
   },
@@ -47,6 +48,7 @@ const initialComplaints = [
     issue: "Payment issue",
     text: "Payment not reflected.",
     status: "Pending",
+    escalation: "Low",
     rating: null,
     feedback: null,
   },
@@ -57,26 +59,29 @@ const initialComplaints = [
     issue: "Scam transaction",
     text: "Unknown merchant charged me.",
     status: "Resolved",
+    escalation: "High",
     rating: 5,
     feedback: "Fraud reversed and card replaced.",
   },
 ];
 
 function Admin() {
+  const [selectedEscalation, setSelectedEscalation] = useState("");
   const [complaints, setComplaints] = useState(initialComplaints);
   const [activeTab, setActiveTab] = useState("Pending");
   const [selectedProduct, setSelectedProduct] = useState("");
 
   /* ===== FILTERED DATA ===== */
   const filteredData = useMemo(() => {
-    return complaints.filter(
-      c =>
-        c.status === activeTab &&
-        (selectedProduct === "" || c.product === selectedProduct)
-    );
-  }, [complaints, activeTab, selectedProduct]);
+  return complaints.filter(
+    c =>
+      c.status === activeTab &&
+      (selectedProduct === "" || c.product === selectedProduct) &&
+      (selectedEscalation === "" || c.escalation === selectedEscalation)
+  );
+}, [complaints, activeTab, selectedProduct, selectedEscalation]);
 
-  /* ===== MARK AS RESOLVED ===== */
+  /* ===== MARK COMPLAINT AS RESOLVED ===== */
   const markAsResolved = id => {
     setComplaints(prev =>
       prev.map(c =>
@@ -97,17 +102,21 @@ function Admin() {
       <Navbar />
 
       <div className="container my-4">
+
+        {/* ===== MAIN CARD ===== */}
         <div
           className="card p-4 shadow"
           style={{ backgroundColor: "rgb(0, 96, 106)" }}
         >
-          {/* ===== HEADER ===== */}
+
+          {/* HEADER */}
           <h3 className="text-white text-center mb-4">
             Admin Complaint Dashboard
           </h3>
 
           {/* ===== FILTER BAR ===== */}
           <div className="d-flex flex-wrap gap-3 mb-4 align-items-center">
+
             <div className="btn-group">
               <button
                 className={`btn ${
@@ -139,19 +148,32 @@ function Admin() {
               onChange={e => setSelectedProduct(e.target.value)}
             >
               <option value="">Select product</option>
-              {productOptions
-                .filter(p => p !== "")
-                .map(p => (
-                  <option key={p} value={p}>
-                    {p}
-                  </option>
-                ))}
+              {productOptions.map(p => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
             </select>
+
+              <select
+                className="form-select"
+                style={{ maxWidth: "220px" }}
+                value={selectedEscalation}
+                onChange={e => setSelectedEscalation(e.target.value)}
+              >
+                <option value="">All Escalations</option>
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+              </select>
+
           </div>
 
-          {/* ===== TABLE ===== */}
+          {/* ===== TABLE CARD ===== */}
           <div className="card shadow-sm">
-            <table className="table table-hover" style={{ marginBottom: 0 }}>
+
+            <table className="table table-hover mb-0">
+
               <thead className="table-light">
                 <tr>
                   <th>ID</th>
@@ -159,6 +181,7 @@ function Admin() {
                   <th>Sub-Product</th>
                   <th>Issue</th>
                   <th>Complaint</th>
+                  <th>Escalation</th>
 
                   {activeTab === "Resolved" && (
                     <>
@@ -172,10 +195,11 @@ function Admin() {
               </thead>
 
               <tbody>
+
                 {filteredData.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={activeTab === "Resolved" ? 8 : 6}
+                      colSpan={activeTab === "Resolved" ? 9 : 7}
                       className="text-center text-muted py-4"
                     >
                       No complaints found.
@@ -184,11 +208,26 @@ function Admin() {
                 ) : (
                   filteredData.map(c => (
                     <tr key={c.id}>
+
                       <td>{c.id}</td>
                       <td>{c.product}</td>
                       <td>{c.subProduct}</td>
                       <td>{c.issue}</td>
                       <td>{c.text}</td>
+
+                      <td>
+                        <span
+                          className={`badge ${
+                            c.escalation === "High"
+                              ? "bg-danger"
+                              : c.escalation === "Medium"
+                              ? "bg-warning text-dark"
+                              : "bg-success"
+                          }`}
+                        >
+                          {c.escalation}
+                        </span>
+                      </td>
 
                       {activeTab === "Resolved" && (
                         <>
@@ -209,12 +248,17 @@ function Admin() {
                           <span className="badge bg-success">Resolved</span>
                         )}
                       </td>
+
                     </tr>
                   ))
                 )}
+
               </tbody>
+
             </table>
+
           </div>
+
         </div>
       </div>
 
