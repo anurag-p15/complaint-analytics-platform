@@ -66,10 +66,16 @@ const initialComplaints = [
 ];
 
 function Admin() {
+  const role = localStorage.getItem("userRole");
+  if (role !== "admin") {
+    window.location.href = "/login";
+  }
+
   const [selectedEscalation, setSelectedEscalation] = useState("");
   const [complaints, setComplaints] = useState(initialComplaints);
   const [activeTab, setActiveTab] = useState("Pending");
   const [selectedProduct, setSelectedProduct] = useState("");
+
 
   /* ===== FILTERED DATA ===== */
   const filteredData = useMemo(() => {

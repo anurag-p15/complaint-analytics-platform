@@ -1,5 +1,5 @@
 import './form.css';
-function RegisterComplaint() {
+function RegisterComplaint({ showUserFields = false })  {
   return (
     <>
       <div className="card p-4 shadow-sm border-0" style={{backgroundColor:' rgb(0, 96, 106)'}}>
@@ -10,6 +10,20 @@ function RegisterComplaint() {
         </p>
 
         <form>
+          {showUserFields && (
+  <div className="row mb-3">
+
+    <div className="col-md-6">
+      <label className="form-label">Name</label>
+      <input
+        type="text"
+        className="form-control"
+        placeholder="Enter full name"
+        required
+      />
+    </div>
+  </div>
+)}
 
           {/* USER */}
           <div className="row mb-3">

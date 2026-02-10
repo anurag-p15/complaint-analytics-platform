@@ -7,6 +7,10 @@ import RegisterComplaint from "./RegisterComplaint";
 import PastComplaints from "./PastComplaints";
 
 function User() {
+  const role = localStorage.getItem("userRole");
+  if (role !== "user") {
+    window.location.href = "/login";
+  }
 
   const [activeView, setActiveView] = useState("register");
 

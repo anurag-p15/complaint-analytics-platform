@@ -1,6 +1,19 @@
 import React from 'react'
+import { useEffect, useState } from "react";
+
 
 function Navbar() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+const [role, setRole] = useState(null);
+
+useEffect(() => {
+  const user = localStorage.getItem("userRole");
+
+  if (user) {
+    setIsLoggedIn(true);
+    setRole(user);
+  }
+}, []);
   return (
     <>
       <nav
@@ -30,9 +43,34 @@ function Navbar() {
             <li className="nav-item">
               <a className="nav-link text-white mx-4" href="/">Home</a>
             </li>
-            <li className="nav-item">
-              <a className="nav-link text-white mx-4" href="/login">Login</a>
-            </li>
+            {isLoggedIn ? (
+  <>
+    <li className="nav-item">
+      <a
+        className="nav-link text-white mx-3"
+        href={role === "admin" ? "/admin" : "/user"}
+      >
+        Dashboard
+      </a>
+    </li>
+
+    <li className="nav-item">
+      <button
+        className="btn btn-link nav-link text-white mx-3"
+        onClick={() => {
+          localStorage.clear();
+          window.location.href = "/login";
+        }}
+      >
+        Logout
+      </button>
+    </li>
+  </>
+) : (
+  <li className="nav-item">
+    <a className="nav-link text-white mx-4" href="/login">Login</a>
+  </li>
+)}
           </ul>
         </div>
       </nav>
