@@ -9,6 +9,16 @@ th{
     color: white;
 }
 /* ===== MODAL OVERLAY ===== */
+.feedback-modal {
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-body {
+  overflow-y: auto;
+  max-height: 55vh;
+}
 
 .modal-overlay {
   position: fixed;

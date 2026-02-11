@@ -1,101 +1,135 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./table.css";
 
 function PastComplaints() {
+  const [showComplaintModal, setShowComplaintModal] = useState(false);
+  const [complaintText, setComplaintText] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [complaints, setComplaints] = useState([]);
+  const email = localStorage.getItem("userEmail");
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [feedbackText, setFeedbackText] = useState("");
+  const [rating, setRating] = useState("");
+
+useEffect(() => {
+  if (!email) return;
+
+  fetch(`http://127.0.0.1:8000/user-complaints/${email}`)
+    .then(res => res.json())
+    .then(data => {
+      setComplaints(data);
+      console.log("First row from backend:", data[0]);
+    })
+    .catch(err => console.error(err));
+
+}, [email]);
 
   return (
-    <>
-      <div className="card p-4 shadow" style={{backgroundColor:' rgb(0, 96, 106)'}}>
+    <div className="card p-4 shadow">
 
-        <h4 style={{color:'white'}}>Your Past Complaints</h4>
+      <h4>Your Past Complaints</h4>
 
-        <table className="table table-hover mt-3">
-          <thead>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Complaint ID</th>
+            <th>Product</th>
+            <th>Sub Product</th>
+            <th>Issue</th>
+            <th>Sub-Issue</th>
+            <th>Complaint Text</th>
+            <th>Resolved</th>
+            <th>Feedback</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          {complaints.length === 0 && (
             <tr>
-              <th>ID</th>
-              <th>Product</th>
-              <th>Sub-Product</th>
-              <th>Issue</th>
-              <th>Complaint Text</th>
-              <th>Status</th>
-              <th>Feedback</th>
-            </tr>
-          </thead>
-
-          <tbody>
-
-            {/* ---- PENDING COMPLAINT ---- */}
-            <tr>
-              <td>22221</td>
-              <td>Mortgage</td>
-              <td>Loan servicing</td>
-              <td>Delay</td>
-              <td>Bank is not responding.</td>
-              <td>
-                <span className="badge bg-warning text-dark">
-                  Pending
-                </span>
-              </td>
-              <td>
-                <button
-                  className="btn btn-sm btn-secondary"
-                  disabled
-                >
-                  Awaiting Resolution
-                </button>
+              <td colSpan="7" className="text-center text-muted">
+                No complaints found
               </td>
             </tr>
+          )}
 
-            {/* ---- RESOLVED BUT NO FEEDBACK ---- */}
-            <tr>
-              <td>33331</td>
-              <td>Credit Card</td>
-              <td>Billing</td>
-              <td>Unauthorized charge</td>
-              <td>Money deducted incorrectly.</td>
+          {complaints.map(row => (
+            <tr key={row["Complaint ID"]}>
+              <td>{row["Date received"]}</td>
+              <td>{row["Complaint ID"]}</td>
+              <td>{row["Product"]}</td>
+              <td>{row["Sub-product"]}</td>
+              <td>{row["Issue"]}</td>
+              <td>{row["Sub-issue"]}</td>
               <td>
-                <span className="badge bg-success">
-                  Resolved
-                </span>
-              </td>
-              <td>
-                <button
-                  className="btn btn-sm btn-success"
-                  onClick={() => setShowModal(true)}
-                >
-                  Give Feedback
-                </button>
-              </td>
+  <button
+    className="btn btn-sm btn-outline-primary"
+    onClick={() => {
+      setComplaintText(row["Consumer complaint narrative"]);
+      setShowComplaintModal(true);
+    }}
+  >
+    View Complaint
+  </button>
+</td>
+
+              <td>{row["Resolved"]}</td>
+
+     <td>
+  {(() => {
+    const feedbackRaw = row["Feedback Text"];
+
+    const hasFeedback =
+      feedbackRaw !== null &&
+      feedbackRaw !== undefined &&
+      feedbackRaw !== "" &&
+      feedbackRaw !== "nan" &&
+      feedbackRaw !== "NaN" &&
+      feedbackRaw !== "None" &&
+      feedbackRaw !== "null" &&
+      String(feedbackRaw).trim() !== "";
+
+    /* CASE 1 — Pending */
+    if (row["Resolved"] !== "Yes") {
+      return (
+        <span className="badge bg-warning text-dark">
+          Pending
+        </span>
+      );
+    }
+
+    /* CASE 2 — Resolved but NO feedback */
+    if (row["Resolved"] === "Yes" && !hasFeedback) {
+      return (
+        <button
+          className="btn btn-sm btn-success"
+         onClick={() => {
+  setSelectedComplaint(row);
+  setShowModal(true);
+}}
+
+        >
+          Give Feedback
+        </button>
+      );
+    }
+
+    /* CASE 3 — Resolved + feedback exists */
+    return (
+      <span className="text-success fw-semibold">
+        Feedback Submitted
+      </span>
+    );
+  })()}
+</td>
+
             </tr>
+          ))}
 
-            {/* ---- RESOLVED + FEEDBACK GIVEN ---- */}
-            <tr>
-              <td>44441</td>
-              <td>Student Loan</td>
-              <td>Servicing</td>
-              <td>Payment issue</td>
-              <td>Resolved quickly after complaint.</td>
-              <td>
-                <span className="badge bg-success">
-                  Resolved
-                </span>
-              </td>
-              <td>
-                <span className="text-success fw-semibold">
-                  Feedback Submitted ✔
-                </span>
-              </td>
-            </tr>
-
-          </tbody>
-        </table>
-
-      </div>
-
-      {/* ===== MODAL ===== */}
-
-      {showModal && (
+        </tbody>
+      </table>
+{showModal && (
         <div className="modal-overlay">
 
           <div className="feedback-modal">
@@ -113,15 +147,23 @@ function PastComplaints() {
               <div className="mb-3">
                 <label className="form-label">Feedback Text</label>
                 <textarea
-                  className="form-control"
-                  rows="4"
-                  placeholder="Describe your experience..."
-                ></textarea>
+  className="form-control"
+  rows="4"
+  placeholder="Describe your experience..."
+  value={feedbackText}
+  onChange={e => setFeedbackText(e.target.value)}
+  required
+/>
+
               </div>
 
               <div className="mb-3">
                 <label className="form-label">Rating</label>
-                <select className="form-select">
+                <select
+  className="form-select"
+  value={rating}
+  onChange={e => setRating(e.target.value)}
+>
                   <option value="">Select rating</option>
                   <option>1</option>
                   <option>2</option>
@@ -150,7 +192,43 @@ function PastComplaints() {
 
         </div>
       )}
-    </>
+      {showComplaintModal && (
+  <div className="modal-overlay">
+
+    <div className="feedback-modal">
+
+      <div className="modal-header">
+        <h5>Complaint Details</h5>
+
+        <button
+          className="btn-close"
+          onClick={() => setShowComplaintModal(false)}
+        ></button>
+      </div>
+
+      <div className="modal-body">
+
+        <p style={{ whiteSpace: "pre-wrap" }}>
+          {complaintText || "No complaint text available."}
+        </p>
+
+      </div>
+
+      <div className="modal-footer">
+        <button
+          className="btn btn-secondary"
+          onClick={() => setShowComplaintModal(false)}
+        >
+          Close
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+)}
+
+    </div>
   );
 }
 
