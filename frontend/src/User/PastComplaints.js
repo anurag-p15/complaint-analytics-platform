@@ -11,6 +11,57 @@ function PastComplaints() {
   const [feedbackText, setFeedbackText] = useState("");
   const [rating, setRating] = useState("");
 
+const submitFeedback = async () => {
+  if (!feedbackText || !rating || !selectedComplaint) return;
+
+  try {
+    console.log("Submitting to:", "http://localhost:8000/submit-feedback");
+    console.log("Request body:", {
+      complaint_id: selectedComplaint["Complaint ID"],
+      feedback: feedbackText,
+      rating: rating,
+    });
+
+    const res = await fetch("http://localhost:8000/submit-feedback", {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        complaint_id: selectedComplaint["Complaint ID"],
+        feedback: feedbackText,
+        rating: rating,
+      }),
+    });
+
+    console.log("Response status:", res.status);
+    console.log("Response headers:", [...res.headers.entries()]);
+    
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error("Error response:", errorText);
+      throw new Error(`Failed: ${res.status} - ${errorText}`);
+    }
+
+    const data = await res.json();
+    console.log("Success response:", data);
+
+    setShowModal(false);
+    setFeedbackText("");
+    setRating("");
+
+    // reload complaints
+    const refreshed = await fetch(
+      `http://localhost:8000/user-complaints/${email}`
+    );
+    setComplaints(await refreshed.json());
+
+  } catch (err) {
+    console.error("Fetch error:", err);
+    alert("Error submitting feedback: " + err.message);
+  }
+};
+
 useEffect(() => {
   if (!email) return;
 
@@ -183,9 +234,11 @@ useEffect(() => {
                 Close
               </button>
 
-              <button className="btn btn-primary">
-                Submit Feedback
-              </button>
+              <button
+  className="btn btn-primary"
+  onClick={submitFeedback}
+>
+  Submit Feedback</button>
             </div>
 
           </div>
