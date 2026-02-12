@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pathlib import Path
 import pandas as pd
+from datetime import datetime
 from fastapi.encoders import jsonable_encoder
 import numpy as np
 router = APIRouter() 
@@ -26,6 +27,11 @@ def mark_resolved(complaint_id: str):
         raise HTTPException(status_code=404, detail="Complaint not found")
 
     df.loc[row_index, "Resolved"] = "Yes"
+
+    current_time = datetime.now().strftime("%d-%m-%Y")
+    print(current_time)
+
+    df.loc[row_index, "Resolved Date"] = current_time
 
     df.to_csv(COMPLAINTS_CSV, index=False)
 
