@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Navbar from "../Components/navbar";
 import Footer from "../Components/footer";
 
@@ -17,105 +17,94 @@ const productOptions = [
   "Payday loan, title loan, personal loan, or advance loan",
 ];
 
-/* ===== INITIAL COMPLAINT DATA ===== */
-const initialComplaints = [
-  {
-    id: "90001",
-    product: "Credit Card",
-    subProduct: "Billing",
-    issue: "Unauthorized charge",
-    text: "Charged twice for the same transaction.",
-    status: "Pending",
-    escalation: "High",
-    rating: null,
-    feedback: null,
-  },
-  {
-    id: "90002",
-    product: "Mortgage",
-    subProduct: "Loan servicing",
-    issue: "Delay",
-    text: "Loan processing taking too long.",
-    status: "Resolved",
-    escalation: "Medium",
-    rating: 4,
-    feedback: "Resolved quickly by support team.",
-  },
-  {
-    id: "90003",
-    product: "Student loan",
-    subProduct: "Servicing",
-    issue: "Payment issue",
-    text: "Payment not reflected.",
-    status: "Pending",
-    escalation: "Low",
-    rating: null,
-    feedback: null,
-  },
-  {
-    id: "90004",
-    product: "Credit Card",
-    subProduct: "Fraud",
-    issue: "Scam transaction",
-    text: "Unknown merchant charged me.",
-    status: "Resolved",
-    escalation: "High",
-    rating: 5,
-    feedback: "Fraud reversed and card replaced.",
-  },
-];
-
 function Admin() {
   const role = localStorage.getItem("userRole");
   if (role !== "admin") {
     window.location.href = "/login";
   }
 
-  const [selectedEscalation, setSelectedEscalation] = useState("");
-  const [complaints, setComplaints] = useState(initialComplaints);
+  const [complaints, setComplaints] = useState([]);
   const [activeTab, setActiveTab] = useState("Pending");
   const [selectedProduct, setSelectedProduct] = useState("");
+  const [selectedEscalation, setSelectedEscalation] = useState("");
+  const [selectedComplaintText, setSelectedComplaintText] = useState("");
 
+  /* ===== PAGINATION ===== */
+  const [currentPage, setCurrentPage] = useState(1);
+  const complaintsPerPage = 25;
 
-  /* ===== FILTERED DATA ===== */
+  const [selectedFeedbackText, setSelectedFeedbackText] = useState("");
+
+  /* ===== FETCH DATA ===== */
+ const fetchComplaints = async () => {
+  try {
+    const res = await fetch("http://127.0.0.1:8000/admin-complaints");
+    const data = await res.json();
+    setComplaints(data);
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+useEffect(() => {
+  fetchComplaints();
+}, []);
+
+  /* Reset page when filters change */
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, selectedProduct, selectedEscalation]);
+
+  /* ===== FILTER LOGIC ===== */
   const filteredData = useMemo(() => {
-  return complaints.filter(
-    c =>
-      c.status === activeTab &&
-      (selectedProduct === "" || c.product === selectedProduct) &&
-      (selectedEscalation === "" || c.escalation === selectedEscalation)
-  );
-}, [complaints, activeTab, selectedProduct, selectedEscalation]);
-
-  /* ===== MARK COMPLAINT AS RESOLVED ===== */
-  const markAsResolved = id => {
-    setComplaints(prev =>
-      prev.map(c =>
-        c.id === id
-          ? {
-              ...c,
-              status: "Resolved",
-              rating: 5,
-              feedback: "Issue resolved successfully.",
-            }
-          : c
-      )
+    return complaints.filter(c =>
+      (activeTab === "Pending"
+        ? c["Resolved"] !== "Yes"
+        : c["Resolved"] === "Yes") &&
+      (selectedProduct === "" || c["Product"] === selectedProduct) &&
+      (selectedEscalation === "" ||
+        c["Escalation_label"] === selectedEscalation)
     );
-  };
+  }, [complaints, activeTab, selectedProduct, selectedEscalation]);
+
+  /* ===== PAGINATED DATA ===== */
+  const totalPages = Math.ceil(filteredData.length / complaintsPerPage);
+
+  const paginatedData = filteredData.slice(
+    (currentPage - 1) * complaintsPerPage,
+    currentPage * complaintsPerPage
+  );
+
+  /* ===== MARK AS RESOLVED ===== */
+  const markAsResolved = async (complaintId) => {
+  try {
+    const res = await fetch(
+      `http://127.0.0.1:8000/mark-resolved/${complaintId}`,
+      { method: "PUT" }
+    );
+
+    const data = await res.json();
+
+    if (res.ok) {
+      // 🔥 Refresh entire table from backend
+      await fetchComplaints();
+    } else {
+      alert(data.detail);
+    }
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   return (
     <>
       <Navbar />
 
       <div className="container my-4">
-
-        {/* ===== MAIN CARD ===== */}
         <div
           className="card p-4 shadow"
           style={{ backgroundColor: "rgb(0, 96, 106)" }}
         >
-
-          {/* HEADER */}
           <h3 className="text-white text-center mb-4">
             Admin Complaint Dashboard
           </h3>
@@ -155,116 +144,200 @@ function Admin() {
             >
               <option value="">Select product</option>
               {productOptions.map(p => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
+                <option key={p} value={p}>{p}</option>
               ))}
             </select>
 
-              <select
-                className="form-select"
-                style={{ maxWidth: "220px" }}
-                value={selectedEscalation}
-                onChange={e => setSelectedEscalation(e.target.value)}
-              >
-                <option value="">All Escalations</option>
-                <option value="Low">Low</option>
-                <option value="Medium">Medium</option>
-                <option value="High">High</option>
-              </select>
-
+            <select
+              className="form-select"
+              style={{ maxWidth: "220px" }}
+              value={selectedEscalation}
+              onChange={e => setSelectedEscalation(e.target.value)}
+            >
+              <option value="">All Escalations</option>
+              <option value="Low">Low</option>
+              <option value="Medium">Medium</option>
+              <option value="High">High</option>
+            </select>
           </div>
 
-          {/* ===== TABLE CARD ===== */}
+          {/* ===== TABLE ===== */}
           <div className="card shadow-sm">
-
             <table className="table table-hover mb-0">
-
               <thead className="table-light">
                 <tr>
-                  <th>ID</th>
+                  <th>Complaint ID</th>
+                  <th>User ID</th>
                   <th>Product</th>
                   <th>Sub-Product</th>
                   <th>Issue</th>
                   <th>Complaint</th>
                   <th>Escalation</th>
-
                   {activeTab === "Resolved" && (
                     <>
                       <th>Rating</th>
                       <th>Feedback</th>
                     </>
                   )}
-
                   <th>Action</th>
                 </tr>
               </thead>
 
               <tbody>
-
-                {filteredData.length === 0 ? (
+                {paginatedData.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={activeTab === "Resolved" ? 9 : 7}
+                      colSpan={activeTab === "Resolved" ? 10 : 8}
                       className="text-center text-muted py-4"
                     >
                       No complaints found.
                     </td>
                   </tr>
                 ) : (
-                  filteredData.map(c => (
-                    <tr key={c.id}>
+                  paginatedData.map(c => (
+                    <tr key={c["Complaint ID"]}>
+                      <td>{c["Complaint ID"]}</td>
+                      <td>{c["UserId"]}</td>
+                      <td>{c["Product"]}</td>
+                      <td>{c["Sub-product"]}</td>
+                      <td>{c["Issue"]}</td>
 
-                      <td>{c.id}</td>
-                      <td>{c.product}</td>
-                      <td>{c.subProduct}</td>
-                      <td>{c.issue}</td>
-                      <td>{c.text}</td>
+                      <td>
+                        <button
+                          className="btn btn-sm btn-outline-primary"
+                          onClick={() =>
+                            setSelectedComplaintText(
+                              c["Consumer complaint narrative"]
+                            )
+                          }
+                          data-bs-toggle="modal"
+                          data-bs-target="#complaintModal"
+                        >
+                          View
+                        </button>
+                      </td>
 
                       <td>
                         <span
                           className={`badge ${
-                            c.escalation === "High"
+                            c["Escalation_label"] === "High"
                               ? "bg-danger"
-                              : c.escalation === "Medium"
+                              : c["Escalation_label"] === "Medium"
                               ? "bg-warning text-dark"
                               : "bg-success"
                           }`}
                         >
-                          {c.escalation}
+                          {c["Escalation_label"]}
                         </span>
                       </td>
 
                       {activeTab === "Resolved" && (
-                        <>
-                          <td>{c.rating}</td>
-                          <td>{c.feedback}</td>
-                        </>
-                      )}
+  <>
+    <td>{c["Rating"]}</td>
+
+    <td>
+      <button
+        className="btn btn-sm btn-outline-primary"
+        onClick={() =>
+          setSelectedFeedbackText(c["Feedback Text"])
+        }
+        data-bs-toggle="modal"
+        data-bs-target="#feedbackModal"
+      >
+        View
+      </button>
+    </td>
+  </>
+)}
+
 
                       <td>
-                        {activeTab === "Pending" ? (
+                        {c["Resolved"] !== "Yes" ? (
                           <button
                             className="btn btn-sm btn-success"
-                            onClick={() => markAsResolved(c.id)}
+                            onClick={() =>
+                              markAsResolved(c["Complaint ID"])
+                            }
                           >
                             Mark as Resolved
                           </button>
                         ) : (
-                          <span className="badge bg-success">Resolved</span>
+                          <span className="badge bg-success">
+                            Resolved
+                          </span>
                         )}
                       </td>
-
                     </tr>
                   ))
                 )}
-
               </tbody>
-
             </table>
-
           </div>
 
+          {/* ===== PAGINATION ===== */}
+          {totalPages > 1 && (
+            <div className="d-flex justify-content-center mt-3 gap-2 flex-wrap">
+              {Array.from({ length: totalPages }, (_, index) => (
+                <button
+                  key={index}
+                  className={`btn btn-sm ${
+                    currentPage === index + 1
+                      ? "btn-dark"
+                      : "btn-outline-light"
+                  }`}
+                  onClick={() => setCurrentPage(index + 1)}
+                >
+                  {index + 1}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ===== COMPLAINT MODAL ===== */}
+      <div className="modal fade" id="complaintModal" tabIndex="-1">
+        <div className="modal-dialog modal-lg">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title">Complaint Details</h5>
+              <button
+                type="button"
+                className="btn-close"
+                data-bs-dismiss="modal"
+              ></button>
+            </div>
+
+            <div
+              className="modal-body"
+              style={{ maxHeight: "400px", overflowY: "auto" }}
+            >
+              {selectedComplaintText}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ===== FEEDBACK MODAL ===== */}
+      <div className="modal fade" id="feedbackModal" tabIndex="-1">
+        <div className="modal-dialog modal-lg">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title">Feedback Details</h5>
+              <button
+                type="button"
+                className="btn-close"
+                data-bs-dismiss="modal"
+              ></button>
+            </div>
+
+            <div
+              className="modal-body"
+              style={{ maxHeight: "400px", overflowY: "auto" }}
+            >
+              {selectedFeedbackText}
+            </div>
+          </div>
         </div>
       </div>
 
