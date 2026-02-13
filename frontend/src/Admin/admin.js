@@ -1,6 +1,18 @@
 import { useState, useMemo, useEffect } from "react";
 import Navbar from "../Components/navbar";
 import Footer from "../Components/footer";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  ResponsiveContainer,
+  Legend,LineChart,
+  Line,
+} from "recharts";
+
 
 /* ===== PRODUCT OPTIONS ===== */
 const productOptions = [
@@ -18,44 +30,44 @@ const productOptions = [
 ];
 
 function Admin() {
+  /* ===== AUTH CHECK ===== */
   const role = localStorage.getItem("userRole");
   if (role !== "admin") {
     window.location.href = "/login";
   }
 
+  /* ===== STATE ===== */
   const [complaints, setComplaints] = useState([]);
   const [activeTab, setActiveTab] = useState("Pending");
   const [selectedProduct, setSelectedProduct] = useState("");
   const [selectedEscalation, setSelectedEscalation] = useState("");
   const [selectedComplaintText, setSelectedComplaintText] = useState("");
-
-  /* ===== PAGINATION ===== */
+  const [selectedFeedbackText, setSelectedFeedbackText] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+
   const complaintsPerPage = 25;
 
-  const [selectedFeedbackText, setSelectedFeedbackText] = useState("");
-
   /* ===== FETCH DATA ===== */
- const fetchComplaints = async () => {
-  try {
-    const res = await fetch("http://127.0.0.1:8000/admin-complaints");
-    const data = await res.json();
-    setComplaints(data);
-  } catch (err) {
-    console.error(err);
-  }
-};
+  const fetchComplaints = async () => {
+    try {
+      const res = await fetch("http://127.0.0.1:8000/admin-complaints");
+      const data = await res.json();
+      setComplaints(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
-useEffect(() => {
-  fetchComplaints();
-}, []);
+  useEffect(() => {
+    fetchComplaints();
+  }, []);
 
   /* Reset page when filters change */
   useEffect(() => {
     setCurrentPage(1);
   }, [activeTab, selectedProduct, selectedEscalation]);
 
-  /* ===== FILTER LOGIC ===== */
+  /* ===== FILTERED DATA ===== */
   const filteredData = useMemo(() => {
     return complaints.filter(c =>
       (activeTab === "Pending"
@@ -67,8 +79,116 @@ useEffect(() => {
     );
   }, [complaints, activeTab, selectedProduct, selectedEscalation]);
 
-  /* ===== PAGINATED DATA ===== */
-  const totalPages = Math.ceil(filteredData.length / complaintsPerPage);
+  /* ===== TOP KEYWORDS ===== */
+  const topKeywords = useMemo(() => {
+    const keywordCount = {};
+
+    filteredData.forEach(c => {
+      if (c["Complaint_Keywords"]) {
+        try {
+          const keywords = JSON.parse(
+            c["Complaint_Keywords"].replace(/'/g, '"')
+          );
+
+          keywords.forEach(word => {
+            keywordCount[word] =
+              (keywordCount[word] || 0) + 1;
+          });
+        } catch (err) {
+          console.error("Keyword parse error:", err);
+        }
+      }
+    });
+
+    return Object.entries(keywordCount)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 10);
+  }, [filteredData]);
+
+  /* ===== EMOTION DATA ===== */
+  const emotionData = useMemo(() => {
+    const emotionTotals = {};
+
+    filteredData.forEach(c => {
+      if (c["nrc_emotions"]) {
+        try {
+          const emotions = JSON.parse(
+            c["nrc_emotions"].replace(/'/g, '"')
+          );
+
+          Object.entries(emotions).forEach(
+            ([emotion, value]) => {
+              emotionTotals[emotion] =
+                (emotionTotals[emotion] || 0) + value;
+            }
+          );
+        } catch (err) {
+          console.error("Emotion parse error:", err);
+        }
+      }
+    });
+
+    return Object.entries(emotionTotals).map(
+      ([name, value]) => ({
+        name,
+        value
+      })
+    );
+  }, [filteredData]);
+
+
+//Date filter chart
+const [selectedYear, setSelectedYear] = useState("All");
+ const complaintTrendData = useMemo(() => {
+  const weekCounts = {};
+
+  filteredData.forEach(c => {
+    const rawDate = c["Date received"];
+    if (!rawDate) return;
+
+    // Convert dd-mm-yyyy → yyyy-mm-dd
+    const [day, month, year] = rawDate.split("-");
+    const dateObj = new Date(`${year}-${month}-${day}`);
+
+    if (isNaN(dateObj.getTime())) return;
+
+    const complaintYear = dateObj.getFullYear();
+
+    if (
+      selectedYear !== "All" &&
+      complaintYear !== Number(selectedYear)
+    ) return;
+
+    // Week calculation
+    const oneJan = new Date(complaintYear, 0, 1);
+    const numberOfDays = Math.floor(
+      (dateObj - oneJan) / (24 * 60 * 60 * 1000)
+    );
+
+    const week = Math.ceil(
+      (numberOfDays + oneJan.getDay() + 1) / 7
+    );
+
+    const weekKey = `${complaintYear}-W${String(week).padStart(2, "0")}`;
+
+    weekCounts[weekKey] =
+      (weekCounts[weekKey] || 0) + 1;
+  });
+
+  return Object.entries(weekCounts)
+    .map(([week, count]) => ({
+      week,
+      count
+    }))
+    .sort((a, b) => a.week.localeCompare(b.week));
+}, [filteredData, selectedYear]);
+
+
+  /* ===== PAGINATION ===== */
+  const totalPages = Math.ceil(
+    filteredData.length / complaintsPerPage
+  );
 
   const paginatedData = filteredData.slice(
     (currentPage - 1) * complaintsPerPage,
@@ -77,24 +197,23 @@ useEffect(() => {
 
   /* ===== MARK AS RESOLVED ===== */
   const markAsResolved = async (complaintId) => {
-  try {
-    const res = await fetch(
-      `http://127.0.0.1:8000/mark-resolved/${complaintId}`,
-      { method: "PUT" }
-    );
+    try {
+      const res = await fetch(
+        `http://127.0.0.1:8000/mark-resolved/${complaintId}`,
+        { method: "PUT" }
+      );
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (res.ok) {
-      // 🔥 Refresh entire table from backend
-      await fetchComplaints();
-    } else {
-      alert(data.detail);
+      if (res.ok) {
+        await fetchComplaints();
+      } else {
+        alert(data.detail);
+      }
+    } catch (err) {
+      console.error(err);
     }
-  } catch (err) {
-    console.error(err);
-  }
-};
+  };
 
   return (
     <>
@@ -109,7 +228,7 @@ useEffect(() => {
             Admin Complaint Dashboard
           </h3>
 
-          {/* ===== FILTER BAR ===== */}
+          {/* ===== FILTERS ===== */}
           <div className="d-flex flex-wrap gap-3 mb-4 align-items-center">
 
             <div className="btn-group">
@@ -140,7 +259,9 @@ useEffect(() => {
               className="form-select ms-auto"
               style={{ maxWidth: "420px" }}
               value={selectedProduct}
-              onChange={e => setSelectedProduct(e.target.value)}
+              onChange={e =>
+                setSelectedProduct(e.target.value)
+              }
             >
               <option value="">Select product</option>
               {productOptions.map(p => (
@@ -152,7 +273,9 @@ useEffect(() => {
               className="form-select"
               style={{ maxWidth: "220px" }}
               value={selectedEscalation}
-              onChange={e => setSelectedEscalation(e.target.value)}
+              onChange={e =>
+                setSelectedEscalation(e.target.value)
+              }
             >
               <option value="">All Escalations</option>
               <option value="Low">Low</option>
@@ -166,19 +289,11 @@ useEffect(() => {
             <table className="table table-hover mb-0">
               <thead className="table-light">
                 <tr>
-                  <th>Complaint ID</th>
-                  <th>User ID</th>
+                  <th>ID</th>
+                  <th>User</th>
                   <th>Product</th>
-                  <th>Sub-Product</th>
                   <th>Issue</th>
-                  <th>Complaint</th>
                   <th>Escalation</th>
-                  {activeTab === "Resolved" && (
-                    <>
-                      <th>Rating</th>
-                      <th>Feedback</th>
-                    </>
-                  )}
                   <th>Action</th>
                 </tr>
               </thead>
@@ -186,10 +301,7 @@ useEffect(() => {
               <tbody>
                 {paginatedData.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan={activeTab === "Resolved" ? 10 : 8}
-                      className="text-center text-muted py-4"
-                    >
+                    <td colSpan="6" className="text-center py-4">
                       No complaints found.
                     </td>
                   </tr>
@@ -199,67 +311,29 @@ useEffect(() => {
                       <td>{c["Complaint ID"]}</td>
                       <td>{c["UserId"]}</td>
                       <td>{c["Product"]}</td>
-                      <td>{c["Sub-product"]}</td>
                       <td>{c["Issue"]}</td>
-
                       <td>
-                        <button
-                          className="btn btn-sm btn-outline-primary"
-                          onClick={() =>
-                            setSelectedComplaintText(
-                              c["Consumer complaint narrative"]
-                            )
-                          }
-                          data-bs-toggle="modal"
-                          data-bs-target="#complaintModal"
-                        >
-                          View
-                        </button>
-                      </td>
-
-                      <td>
-                        <span
-                          className={`badge ${
-                            c["Escalation_label"] === "High"
-                              ? "bg-danger"
-                              : c["Escalation_label"] === "Medium"
-                              ? "bg-warning text-dark"
-                              : "bg-success"
-                          }`}
-                        >
+                        <span className={`badge ${
+                          c["Escalation_label"] === "High"
+                            ? "bg-danger"
+                            : c["Escalation_label"] === "Medium"
+                            ? "bg-warning text-dark"
+                            : "bg-success"
+                        }`}>
                           {c["Escalation_label"]}
                         </span>
                       </td>
-
-                      {activeTab === "Resolved" && (
-  <>
-    <td>{c["Rating"]}</td>
-
-    <td>
-      <button
-        className="btn btn-sm btn-outline-primary"
-        onClick={() =>
-          setSelectedFeedbackText(c["Feedback Text"])
-        }
-        data-bs-toggle="modal"
-        data-bs-target="#feedbackModal"
-      >
-        View
-      </button>
-    </td>
-  </>
-)}
-
-
                       <td>
                         {c["Resolved"] !== "Yes" ? (
                           <button
                             className="btn btn-sm btn-success"
                             onClick={() =>
-                              markAsResolved(c["Complaint ID"])
+                              markAsResolved(
+                                c["Complaint ID"]
+                              )
                             }
                           >
-                            Mark as Resolved
+                            Mark Resolved
                           </button>
                         ) : (
                           <span className="badge bg-success">
@@ -272,73 +346,133 @@ useEffect(() => {
                 )}
               </tbody>
             </table>
-          </div>
+            {totalPages > 1 && (
+  <div className="d-flex justify-content-center mt-3 gap-2 flex-wrap">
+    {Array.from({ length: totalPages }, (_, index) => (
+      <button
+        key={index}
+        className={`btn btn-sm ${
+          currentPage === index + 1
+            ? "btn-dark"
+            : "btn-outline-dark"
+        }`}
+        onClick={() => setCurrentPage(index + 1)}
+      >
+        {index + 1}
+      </button>
+    ))}
+  </div>
+)}
 
-          {/* ===== PAGINATION ===== */}
-          {totalPages > 1 && (
-            <div className="d-flex justify-content-center mt-3 gap-2 flex-wrap">
-              {Array.from({ length: totalPages }, (_, index) => (
-                <button
-                  key={index}
-                  className={`btn btn-sm ${
-                    currentPage === index + 1
-                      ? "btn-dark"
-                      : "btn-outline-light"
-                  }`}
-                  onClick={() => setCurrentPage(index + 1)}
-                >
-                  {index + 1}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
+          </div>
       </div>
+    </div>
+      {/* ===== ANALYTICS ===== */}
+      <div className="container-fluid" style={{borderTop:"5px solid black",marginBottom:"30px"}}>    
+        <h2 style={{marginTop:"30px"}}>Visuals at a Snapshot !! </h2>
+        {filteredData.length > 0 && (
+          <div className="mt-5">
+            <h4 className="text-white mb-4">
+              Complaint Analytics
+            </h4>
 
-      {/* ===== COMPLAINT MODAL ===== */}
-      <div className="modal fade" id="complaintModal" tabIndex="-1">
-        <div className="modal-dialog modal-lg">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Complaint Details</h5>
-              <button
-                type="button"
-                className="btn-close"
-                data-bs-dismiss="modal"
-              ></button>
+            <div className="row" style={{margin:"1% 2%"}}>
+              <div className="col-md-12 mb-4">
+                <div className="card p-3 shadow">
+                  <h5 className="text-center mb-3">
+                    Top Keywords
+                  </h5>
+
+                  <ResponsiveContainer
+                    width="100%"
+                    height={350}
+                  >
+                    <BarChart data={topKeywords}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="value" fill="#8884d8" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
             </div>
 
-            <div
-              className="modal-body"
-              style={{ maxHeight: "400px", overflowY: "auto" }}
-            >
-              {selectedComplaintText}
+            <div className="row" style={{margin:"1% 2%"}}>
+              <div className="col-md-7 mb-4">
+                <div className="card p-3 shadow">
+                  <h5 className="text-center mb-3">
+                    Emotion Distribution
+                  </h5>
+
+                  <ResponsiveContainer
+                    width="100%"
+                    height={350}
+                  >
+                    <BarChart data={emotionData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="value" fill="#82ca9d" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              <div className="col-md-5 mb-4">
+                <div className="card p-3 shadow">
+                  <h5 className="text-center mb-3">
+                    Summary of Complaints
+                  </h5>
+                </div>
+              </div>
             </div>
+
+            <div className="row" style={{margin:"1% 2%"}}>
+              <div className="col-md-12 mb-4">
+                <div className="card p-3 shadow">
+                  <h5 className="text-center mb-3">
+                    Complaint Trend
+                  </h5>
+                  <div className="d-flex justify-content-center mb-3 gap-2">
+                      {["All", "2024", "2025", "2026"].map((year) => (
+                        <button
+                          key={year}
+                          className={`btn btn-sm ${
+                            selectedYear === year ? "btn-primary" : "btn-outline-primary"
+                          }`}
+                          onClick={() => setSelectedYear(year)}
+                        >
+                          {year}
+                        </button>
+                      ))}
+                    </div>
+                  <ResponsiveContainer width="100%" height={350}>
+                    <LineChart data={complaintTrendData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="week" />
+                      <YAxis />
+                      <Tooltip />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="count"
+                        stroke="#8884d8"
+                        strokeWidth={2}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+
+            <button className="btn btn-lg btn-primary disabled">Check PowerBi report</button>
           </div>
-        </div>
-      </div>
-
-      {/* ===== FEEDBACK MODAL ===== */}
-      <div className="modal fade" id="feedbackModal" tabIndex="-1">
-        <div className="modal-dialog modal-lg">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Feedback Details</h5>
-              <button
-                type="button"
-                className="btn-close"
-                data-bs-dismiss="modal"
-              ></button>
-            </div>
-
-            <div
-              className="modal-body"
-              style={{ maxHeight: "400px", overflowY: "auto" }}
-            >
-              {selectedFeedbackText}
-            </div>
-          </div>
-        </div>
+        )}
       </div>
 
       <Footer />
