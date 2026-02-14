@@ -123,22 +123,33 @@ def submit_feedback(data: dict):
             if not user_feedback.empty:
                 ratings = pd.to_numeric(user_feedback["Rating"], errors="coerce")
                 sentiments = pd.to_numeric(user_feedback["Sentiment_Feedback_Score"], errors="coerce")
-                
+
                 avg_rating = ratings.mean() if not pd.isna(ratings.mean()) else 0
                 avg_sentiment = sentiments.mean() if not pd.isna(sentiments.mean()) else 0
                 variance = sentiments.var() if not pd.isna(sentiments.var()) else 0
-                
+
+                # Resolution Rate calculation
+                total_user_complaints = len(df[df["UserId"] == user_id])
+                resolved_count = len(df[(df["UserId"] == user_id) & (df["Rating"].notna())])
+
+                resolution_rate = (
+                    resolved_count / total_user_complaints
+                    if total_user_complaints > 0 else 0
+                )
+
+                # ---- UPDATE ALL RELATED COLUMNS ----
                 consumer_df.loc[consumer_df["UserId"] == user_id, "average_feedback_score"] = round(avg_rating, 3)
                 consumer_df.loc[consumer_df["UserId"] == user_id, "average_feedback_sentiment"] = round(avg_sentiment, 4)
                 consumer_df.loc[consumer_df["UserId"] == user_id, "feedback_variance"] = round(variance, 4)
-                
+
+                # Also update capitalized versions (since both exist in your schema)
+                consumer_df.loc[consumer_df["UserId"] == user_id, "Feedback_Variance"] = round(variance, 4)
+                consumer_df.loc[consumer_df["UserId"] == user_id, "Avg_Feedback_Score"] = round(avg_rating, 3)
+                consumer_df.loc[consumer_df["UserId"] == user_id, "Average_Feedback_Sentiment"] = round(avg_sentiment, 4)
+
+                # Resolution Rate
+                consumer_df.loc[consumer_df["UserId"] == user_id, "Resolution_Rate"] = round(resolution_rate, 4)
+
                 consumer_df.to_csv(CONSUMER_CSV, index=False)
         except Exception as e:
             print(f"Error updating consumer.csv: {str(e)}")
-    
-    return {
-        "status": "ok",
-        "sentiment": label,
-        "score": score,
-        "message": "Feedback submitted successfully"
-    }

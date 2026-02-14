@@ -17,7 +17,7 @@ def mark_resolved(complaint_id: str):
 
     df = pd.read_csv(COMPLAINTS_CSV)
 
-    # ✅ Use EXACT SAME COLUMN NAME everywhere
+   
     df["Complaint ID"] = df["Complaint ID"].astype(str)
     complaint_id = str(complaint_id)
 
@@ -34,5 +34,37 @@ def mark_resolved(complaint_id: str):
     df.loc[row_index, "Resolved Date"] = current_time
 
     df.to_csv(COMPLAINTS_CSV, index=False)
+    
+    CONSUMER_CSV = BASE_DIR / "data" / "consumer.csv"
 
-    return {"message": "Complaint marked as resolved"}
+    if CONSUMER_CSV.exists():
+        try:
+            consumer_df = pd.read_csv(CONSUMER_CSV)
+
+            # Get user id of this complaint
+            user_id = df.loc[row_index, "UserId"].iloc[0]
+
+            user_complaints = df[df["UserId"] == user_id]
+
+            total_complaints = len(user_complaints)
+            resolved_count = len(user_complaints[user_complaints["Resolved"] == "Yes"])
+
+            resolution_rate = (
+                resolved_count / total_complaints
+                if total_complaints > 0 else 0
+            )
+
+            consumer_df.loc[
+                consumer_df["UserId"] == user_id,
+                "Resolution_Rate"
+            ] = round(resolution_rate, 4)
+
+            consumer_df.to_csv(CONSUMER_CSV, index=False)
+
+        except Exception as e:
+            print(f"Error updating resolution rate: {str(e)}")
+
+    return {
+        "message": "Complaint marked as resolved",
+        "resolution_rate_updated": True
+    }

@@ -16,14 +16,14 @@ import {
 
 /* ===== PRODUCT OPTIONS ===== */
 const productOptions = [
-  "Debt Collection",
-  "Checking or Savings Account",
-  "Credit Card",
+  "Debt collection",
+  "Checking or savings account",
+  "Credit card",
   "Credit reporting or other personal consumer reports",
   "Debt or credit management",
   "Money transfer, virtual currency, or money service",
   "Mortgage",
-  "Prepaid Card",
+  "Prepaid card",
   "Student loan",
   "Vehicle loan or lease",
   "Payday loan, title loan, personal loan, or advance loan",

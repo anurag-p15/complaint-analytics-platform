@@ -19,7 +19,7 @@ def get_all_complaints():
 
     df = pd.read_csv(COMPLAINTS_CSV)
 
-    # 🔥 FORCE CLEAN EVERYTHING
+    
     df = df.replace([np.inf, -np.inf], np.nan)
     df = df.replace({np.nan: None})
 
@@ -29,5 +29,4 @@ def get_all_complaints():
 
     data = df.to_dict(orient="records")
 
-    # 🔥 THIS LINE SOLVES IT COMPLETELY
     return jsonable_encoder(data)
