@@ -2,17 +2,21 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../Components/navbar";
 import Footer from "../Components/footer";
-import RegisterComplaint from "../User/RegisterComplaint";
 import "./login.css";
 
 function Login() {
-  const [showModal, setShowModal] = useState(false);
+  const [isRegister, setIsRegister] = useState(false);
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
 
+  const [regName, setRegName] = useState("");
+  const [age, setAge] = useState("");
+  const [gender, setGender] = useState("");
+
   const navigate = useNavigate();
 
-  // ===== SUBMIT HANDLER =====
+  // ===== LOGIN HANDLER (UNCHANGED) =====
   const handleLogin = async e => {
     e.preventDefault();
 
@@ -32,27 +36,58 @@ function Login() {
         alert("Invalid credentials");
         return;
       }
-       const data = await res.json();
+
+      const data = await res.json();
 
       if (data.role === "admin") {
         navigate("/admin");
       } else {
         navigate("/user");
       }
-    
-    localStorage.setItem("userName", name);
-    localStorage.setItem("userEmail", email);
-    localStorage.setItem("userRole", data.role);
 
-    if (data.role === "admin") {
-      window.location.href = "/admin";
-    } else {
-      window.location.href = "/user";
-    }
-    
+      localStorage.setItem("userName", name);
+      localStorage.setItem("userEmail", email);
+      localStorage.setItem("userRole", data.role);
+
+      if (data.role === "admin") {
+        window.location.href = "/admin";
+      } else {
+        window.location.href = "/user";
+      }
+
     } catch (err) {
       alert("Backend not reachable");
       console.error(err);
+    }
+  };
+
+  // ===== REGISTER HANDLER =====
+  const handleRegister = async e => {
+    e.preventDefault();
+
+    try {
+      const res = await fetch("http://localhost:8000/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: regName,
+          age,
+          gender,
+        }),
+      });
+
+      if (!res.ok) {
+        alert("Registration failed");
+        return;
+      }
+
+      alert("Registration successful");
+      setIsRegister(false);
+
+    } catch (err) {
+      alert("Backend not reachable");
     }
   };
 
@@ -64,74 +99,93 @@ function Login() {
         <div className="row w-100 g-4 justify-content-center">
           <div className="col-md-6 d-flex justify-content-center">
             <div className="login-card w-100">
-              <h3 className="login-title">Login</h3>
 
-              <form onSubmit={handleLogin}>
+              <h3 className="login-title">
+                {isRegister ? "Register User" : "Login"}
+              </h3>
 
-                <input
-                  type="text"
-                  className="form-control mb-3"
-                  placeholder="Name"
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  required
-                />
+              {/* LOGIN FORM */}
+              {!isRegister && (
+                <form onSubmit={handleLogin}>
 
-                <input
-                  type="email"
-                  className="form-control mb-3"
-                  placeholder="Email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  required
-                />
+                  <input
+                    type="text"
+                    className="form-control mb-3"
+                    placeholder="Name"
+                    value={name}
+                    onChange={e => setName(e.target.value)}
+                    required
+                  />
 
-                <button type="submit" className="btn btn-dark w-100">
-                  Login
-                </button>
+                  <input
+                    type="email"
+                    className="form-control mb-3"
+                    placeholder="Email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    required
+                  />
 
-              </form>
-              {/* NEW USER BUTTON */}
+                  <button type="submit" className="btn btn-dark w-100">
+                    Login
+                  </button>
+                </form>
+              )}
+
+              {/* REGISTER FORM */}
+              {isRegister && (
+                <form onSubmit={handleRegister}>
+
+                  <input
+                    type="text"
+                    className="form-control mb-3"
+                    placeholder="Name"
+                    value={regName}
+                    onChange={e => setRegName(e.target.value)}
+                    required
+                  />
+
+                  <input
+                    type="number"
+                    className="form-control mb-3"
+                    placeholder="Age"
+                    value={age}
+                    onChange={e => setAge(e.target.value)}
+                    required
+                  />
+
+                  <select
+                    className="form-control mb-3"
+                    value={gender}
+                    onChange={e => setGender(e.target.value)}
+                    required
+                  >
+                    <option value="">Select Gender</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
+                  </select>
+
+                  <button type="submit" className="btn btn-dark w-100">
+                    Register
+                  </button>
+                </form>
+              )}
+
+              {/* TOGGLE BUTTON */}
               <button
                 className="btn btn-outline-primary w-100 mt-3"
-                onClick={() => setShowModal(true)}
+                onClick={() => setIsRegister(!isRegister)}
               >
-                New User? Register Complaint
+                {isRegister
+                  ? "Already a user? Login"
+                  : "New user? Register"}
               </button>
+
             </div>
           </div>
         </div>
       </div>
-
-      {/* MODAL */}
-      {showModal && (
-        <>
-          <div className="modal fade show d-block" tabIndex="-1">
-            <div className="modal-dialog modal-lg modal-dialog-centered">
-              <div className="modal-content">
-                <div className="modal-header">
-                  <h5 className="modal-title">Register Complaint</h5>
-                  <button
-                    type="button"
-                    className="btn-close"
-                    onClick={() => setShowModal(false)}
-                  ></button>
-                </div>
-
-                <div className="modal-body">
-                  <RegisterComplaint showUserFields />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* BACKDROP */}
-          <div
-            className="modal-backdrop fade show"
-            onClick={() => setShowModal(false)}
-          />
-        </>
-      )}
 
       <Footer />
     </>
