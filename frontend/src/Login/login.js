@@ -37,23 +37,19 @@ function Login() {
         return;
       }
 
-      const data = await res.json();
+     const data = await res.json();
 
-      if (data.role === "admin") {
-        navigate("/admin");
-      } else {
-        navigate("/user");
-      }
+sessionStorage.setItem("userId", data.userId); // 🔥 store userId
+localStorage.setItem("userName", data.name);
+localStorage.setItem("userEmail", data.email);
+localStorage.setItem("userRole", data.role);
 
-      localStorage.setItem("userName", name);
-      localStorage.setItem("userEmail", email);
-      localStorage.setItem("userRole", data.role);
+if (data.role === "admin") {
+  window.location.href = "/admin";
+} else {
+  window.location.href = "/user";
+}
 
-      if (data.role === "admin") {
-        window.location.href = "/admin";
-      } else {
-        window.location.href = "/user";
-      }
 
     } catch (err) {
       alert("Backend not reachable");
@@ -68,9 +64,7 @@ function Login() {
   try {
     const res = await fetch("http://localhost:8000/register", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         name: regName,
         age: Number(age),
@@ -85,16 +79,18 @@ function Login() {
 
     const data = await res.json();
 
+    // 🔥 Store user info in both localStorage and sessionStorage
     localStorage.setItem("userName", data.User_name);
     localStorage.setItem("userEmail", data.User_email);
     localStorage.setItem("userRole", "user");
 
-    //  required alert
+    sessionStorage.setItem("userId", data.UserId); // 🔥 store userId for complaint form
+
     alert(
       `Registration Successful\n\nName: ${data.User_name}\nEmail: ${data.User_email}`
     );
 
-    //  redirect to user dashboard
+    // redirect to user dashboard
     navigate("/user");
 
   } catch (err) {
@@ -102,6 +98,7 @@ function Login() {
     console.error(err);
   }
 };
+
 
   return (
     <>
@@ -173,9 +170,9 @@ function Login() {
                     required
                   >
                     <option value="">Select Gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
                   </select>
 
                   <button type="submit" className="btn btn-dark w-100">

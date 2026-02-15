@@ -27,6 +27,12 @@ def login_user(payload: LoginRequest):
     ]
 
     if not match.empty:
-        return {"role": "user"}
+        user = match.iloc[0]  # get the first matching row
+        return {
+            "role": "user",
+            "userId": int(user["UserId"]),   # make sure the column name matches exactly
+            "name": user["User_name"],
+            "email": user["User_email"]
+        }
 
     raise HTTPException(401, "Invalid credentials")
