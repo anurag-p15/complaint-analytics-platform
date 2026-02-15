@@ -63,33 +63,45 @@ function Login() {
 
   // ===== REGISTER HANDLER =====
   const handleRegister = async e => {
-    e.preventDefault();
+  e.preventDefault();
 
-    try {
-      const res = await fetch("http://localhost:8000/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: regName,
-          age,
-          gender,
-        }),
-      });
+  try {
+    const res = await fetch("http://localhost:8000/register", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        name: regName,
+        age: Number(age),
+        gender,
+      }),
+    });
 
-      if (!res.ok) {
-        alert("Registration failed");
-        return;
-      }
-
-      alert("Registration successful");
-      setIsRegister(false);
-
-    } catch (err) {
-      alert("Backend not reachable");
+    if (!res.ok) {
+      alert("Registration failed");
+      return;
     }
-  };
+
+    const data = await res.json();
+
+    localStorage.setItem("userName", data.User_name);
+    localStorage.setItem("userEmail", data.User_email);
+    localStorage.setItem("userRole", "user");
+
+    //  required alert
+    alert(
+      `Registration Successful\n\nName: ${data.User_name}\nEmail: ${data.User_email}`
+    );
+
+    //  redirect to user dashboard
+    navigate("/user");
+
+  } catch (err) {
+    alert("Backend not reachable");
+    console.error(err);
+  }
+};
 
   return (
     <>
