@@ -133,9 +133,9 @@ def register_complaint(data: dict):
     second_score = float(top_scores[1])
     gap = best_score - second_score
 
-    # 🔧 TUNABLE THRESHOLDS
-    CONFIDENCE_THRESHOLD = 0.45
-    GAP_THRESHOLD = 0.45
+    #  TUNABLE THRESHOLDS
+    CONFIDENCE_THRESHOLD = 0.25
+    GAP_THRESHOLD = 0.05
 
     if best_score < CONFIDENCE_THRESHOLD and gap < GAP_THRESHOLD:
         sub_issue_label = "Other"
