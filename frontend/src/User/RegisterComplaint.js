@@ -40,6 +40,12 @@
 
         e.target.reset();
 
+        // 🔥 Simple success alert (OK button only)
+  window.alert("Complaint registered successfully !! ");
+
+// Refresh automatically after user clicks OK
+  window.location.reload();
+
       } catch (err) {
         console.error(err);
         setMessage(" Error registering complaint");
@@ -141,6 +147,7 @@
                   <option>Charged fees or interest you didn't expect</option>
                   <option>Problem with customer service</option>
                   <option>Fraud or scam</option>
+                  <option>Information on Credit Card or Prepaid Card</option>
                   <option>Incorrect information on your report</option>
                   <option>Unauthorized withdrawals or charges</option>
                   <option>Struggling to pay your loan</option>
@@ -160,6 +167,14 @@
                 <select name="company" className="form-select" required>
                   <option value="">Select company</option>
                   <option>Credit Service International Corp</option>
+                  <option>Capital One</option>
+                  <option>JPMorgan Chase & Co.</option>
+                  <option>Navient Solutions, LLC</option>
+                  <option>Experian Information Solutions, Inc.</option>
+                  <option>Equifax, Inc.</option>
+                  <option>TransUnion LLC</option>
+                  <option>Encore Capital Group Inc.</option>
+                  <option>Portfolio Recovery Associates, LLC</option>
                   <option>WELLS FARGO & COMPANY</option>
                   <option>M&T BANK CORPORATION</option>
                   <option>TRANSUNION INTERMEDIATE HOLDINGS, INC.</option>

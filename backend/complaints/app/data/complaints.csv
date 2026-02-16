@@ -22383,7 +22383,7 @@ I contacted customer service on March 8, 2026, and explained that the payment wa
 
 Due to this issue, I have incurred additional interest charges, and my account balance has increased unnecessarily. I am requesting that the late fee and associated interest be removed, that my APR be restored to the previous rate, and that my account be corrected to reflect an on-time payment. I also request clearer disclosure of payment cutoff times to prevent this issue from occurring in the future.
 
-I am seeking a fair resolution and correction of my account to ensure that I am not penalized for a payment that was submitted before the due date.","CITIBANK, N.A.",KY,40235,18395334,2002,,,,,249,,neutral,0.5060132145881653,,,0.12,"['be', 'from', 'when', 'credit', 'company']",0.5,0.5,0.367,Low,"{'anger': 5, 'negative': 20, 'positive': 12, 'trust': 10, 'sadness': 5, 'anticipation': 4, 'fear': 2}",,
+I am seeking a fair resolution and correction of my account to ensure that I am not penalized for a payment that was submitted before the due date.","CITIBANK, N.A.",KY,40235,18395334,2002,,,,,249,,neutral,0.506013215,,,0.12,"['be', 'from', 'when', 'credit', 'company']",0.5,0.5,0.367,Low,"{'anger': 5, 'negative': 20, 'positive': 12, 'trust': 10, 'sadness': 5, 'anticipation': 4, 'fear': 2}",,
 15-02-2026,Credit Card,Checking account,Billing Issue,Other,"I am filing this complaint regarding my credit card account with Bank of America. Over the past four months, I have been charged a recurring monthly subscription fee of $24.99 from a merchant that I do not recognize and did not authorize.
 
 The charges first appeared on my November 2025 statement and have continued through February 2026. I reviewed my transaction history and confirmed that I did not sign up for any subscription service matching this description. I contacted the merchant listed on the statement, but they were unable to locate an account under my name, email address, or phone number.
@@ -22396,4 +22396,46 @@ As a result of these ongoing charges, I have incurred interest and my account ba
 
 I am seeking a full refund of the disputed amounts and corrective action to prevent further unauthorized billing.
 
-If you'd like, I can generate a batch of 5–10 variations to help diversify your dataset.","BANK OF AMERICA, NATIONAL ASSOCIATION",LA,34521,18395335,1014,,,,,278,,negative,0.7110355496406555,,,0.117,"['from', 'be', 'when', 'but', 'dataset.']",0.5,0.5,0.36595,Low,"{'anger': 4, 'negative': 8, 'positive': 15, 'trust': 20, 'sadness': 1, 'anticipation': 4, 'fear': 2}",,
+If you'd like, I can generate a batch of 5–10 variations to help diversify your dataset.","BANK OF AMERICA, NATIONAL ASSOCIATION",LA,34521,18395335,1014,,,,,278,,negative,0.71103555,,,0.117,"['from', 'be', 'when', 'but', 'dataset.']",0.5,0.5,0.36595,Low,"{'anger': 4, 'negative': 8, 'positive': 15, 'trust': 20, 'sadness': 1, 'anticipation': 4, 'fear': 2}",,
+16-02-2026,Credit Card,General-purpose credit card or charge card,Billing Issue,Other,"I am submitting this complaint regarding inaccurate charges and billing errors on my credit card account with Capital One.
+On December 18, 2025, I noticed two transactions totaling $842.16 that I did not authorize. The transactions were listed as online purchases from a merchant I do not recognize. I immediately contacted Capital One customer service to dispute the charges and was informed that a fraud investigation would be opened.
+While the representative initially assured me that I would not be held responsible for the charges during the investigation, the disputed amount was still added to my statement balance. As a result, interest was charged on the disputed amount, and my minimum payment increased significantly. This caused financial hardship and negatively impacted my credit utilization.
+I followed up twice in January 2026 but was told that the investigation was still pending. I requested written confirmation that the disputed charges would not accrue interest, but I have not received any documentation. Additionally, I was informed that I may be required to submit a written affidavit, although this was not clearly communicated during my first call.
+I am requesting that:
+
+
+The unauthorized charges be permanently removed from my account.
+
+
+All related interest and fees be refunded.
+
+
+Written confirmation be provided that I am not responsible for these charges.
+
+
+The company ensure that no negative information related to this dispute is reported to credit bureaus.
+I believe the company has not handled this billing dispute in a timely or transparent manner. I am seeking resolution through this complaint process.
+",Capital One,DC,20056,18395336,2001,,,,,255,,negative,0.7534221410751343,,,0.119,"['negatively', 'although', 'billing', 'January', 'the']",0.5,0.5,0.36665,Low,"{'anger': 6, 'negative': 13, 'positive': 16, 'trust': 15, 'anticipation': 6, 'sadness': 2}",,
+16-02-2026,Credit Card,General-purpose credit card or charge card,Information on Credit Card or Prepaid Card,Other,"I am filing this complaint against Equifax regarding inaccurate information that appears on my credit report.
+
+In November 2025, I reviewed my credit report and discovered a collection account from a telecommunications company that I do not recognize. The account was opened in 2023 in a state where I have never lived. The balance reported is $1,276. I believe this account may be the result of identity theft or mixed file information.
+
+On December 2, 2025, I submitted a dispute directly to Equifax online and provided documentation verifying my identity and current address. I also included a written statement explaining that the account does not belong to me. On January 5, 2026, I received the results of the investigation stating that the account had been “verified as accurate.”
+
+Equifax did not provide details about how the information was verified or what documentation was reviewed. I contacted the original creditor, who informed me that they rely on information provided by the credit reporting agency and could not assist further without additional account details that I do not have.
+
+Because of this inaccurate account, my credit score has decreased significantly, and I was recently denied for an auto loan. I am concerned that the investigation was not conducted properly and that my dispute was not given reasonable consideration.
+
+I am requesting that:
+
+The inaccurate account be removed from my credit report.
+
+A thorough reinvestigation be conducted with proper documentation.
+
+Written confirmation of the deletion be provided.
+
+Any adverse reporting related to this account be corrected immediately.
+
+I am seeking assistance in resolving this matter, as my direct attempts to correct the error have been unsuccessful.
+
+If you would like, I can provide another example for mortgage servicing, auto loans, student loans, debt collection, or checking/savings accounts.","Equifax, Inc.",DC,20056,18395337,2001,,,,,294,,negative,0.5865017771720886,,,0.117,"['Equifax', 'accounts.', 'report', 'January', 'balance']",0.5,0.5,0.36595,Low,"{'anger': 5, 'negative': 14, 'positive': 23, 'trust': 24, 'anticipation': 5, 'disgust': 2, 'fear': 4, 'sadness': 7, 'joy': 1, 'surprise': 1}",,
