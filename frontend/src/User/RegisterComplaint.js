@@ -157,6 +157,7 @@
                   <option>Problem with a credit reporting company's investigation into an existing issue</option>
                   <option>Billing Issue</option>
                   <option>Problem with a credit reporting company's handling of your dispute</option>
+                  <option>Problems with payment processing / inaccurate information on account</option>
                   <option>Other service problem</option>
                 </select>
               </div>

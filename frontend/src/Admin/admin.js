@@ -41,8 +41,6 @@ function Admin() {
   const [activeTab, setActiveTab] = useState("Pending");
   const [selectedProduct, setSelectedProduct] = useState("");
   const [selectedEscalation, setSelectedEscalation] = useState("");
-  const [selectedComplaintText, setSelectedComplaintText] = useState("");
-  const [selectedFeedbackText, setSelectedFeedbackText] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
   const complaintsPerPage = 25;
