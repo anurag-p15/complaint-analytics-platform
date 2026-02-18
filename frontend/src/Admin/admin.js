@@ -215,6 +215,64 @@ const [selectedYear, setSelectedYear] = useState("All");
     }
   };
 
+  ///API call to fetch summary for a complaint
+  const [summary, setSummary] = useState(null);
+  const [loadingSummary, setLoadingSummary] = useState(false);
+  const [summaryView, setSummaryView] = useState("issues");
+
+  const generateSummary = async () => {
+
+  if (!selectedProduct) return;
+
+  setLoadingSummary(true);
+
+  try {
+    const res = await fetch("http://127.0.0.1:8000/generate-summary", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ product: selectedProduct })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) setSummary(data);
+    else alert(data.detail);
+
+  } catch (err) {
+    console.error(err);
+  }
+
+  setLoadingSummary(false);
+};
+
+useEffect(() => {
+
+  if (!selectedProduct) return;
+
+  const fetchSummary = async () => {
+  try {
+    const res = await fetch(
+      "http://127.0.0.1:8000/get-summary/" + selectedProduct
+    );
+
+    if (!res.ok) {
+      setSummary(null);
+      return;
+    }
+
+    const data = await res.json();
+    setSummary(data);
+
+  } catch (err) {
+    console.error(err);
+    setSummary(null);
+  }
+};
+
+  fetchSummary();
+
+}, [selectedProduct]);
+
   return (
     <>
       <Navbar />
@@ -423,14 +481,91 @@ const [selectedYear, setSelectedYear] = useState("All");
                 </div>
               </div>
 
-              <div className="col-md-5 mb-4">
-                <div className="card p-3 shadow">
-                  <h5 className="text-center mb-3">
-                    Summary of Complaints
-                  </h5>
-                </div>
-              </div>
+            <div className="col-md-5 mb-4">
+                        <div
+                        className="card p-3 shadow d-flex flex-column"
+                        style={{ height: "52vh" }}
+                        >
+                        <h5 className="text-center mb-3">Summary of Complaints</h5>
+
+                        {!selectedProduct ? (
+
+                          <div className="text-center my-auto">
+                            <p>Select a product to generate summary</p>
+                          </div>
+
+                        ) : (
+
+                          <>
+            {/* 🔹 TOGGLE BUTTONS */}
+            <div className="d-flex justify-content-center gap-2 mb-2">
+              <button
+                className={`btn btn-sm ${
+                  summaryView === "issues"
+                    ? "btn-primary"
+                    : "btn-outline-primary"
+                }`}
+                onClick={() => setSummaryView("issues")}
+              >
+                Issues
+              </button>
+
+              <button
+                className={`btn btn-sm ${
+                  summaryView === "insights"
+                    ? "btn-primary"
+                    : "btn-outline-primary"
+                }`}
+                onClick={() => setSummaryView("insights")}
+              >
+                Insights
+              </button>
             </div>
+
+            {/* 🔹 SCROLLABLE CONTENT */}
+            <div style={{ overflowY: "auto", flexGrow: 1 }}>
+
+              {summary && summaryView === "issues" && (
+                <>
+                  <pre style={{ whiteSpace: "pre-wrap" }}>
+                    {summary.Key_Issues}
+                  </pre>
+                </>
+              )}
+
+              {summary && summaryView === "insights" && (
+                <>
+                  <pre style={{ whiteSpace: "pre-wrap" }}>
+                    {summary.Recommended_Actions}
+                  </pre>
+                </>
+              )}
+
+            </div>
+
+            {/* 🔹 BUTTON AT BOTTOM */}
+            <button
+              className="btn btn-primary mt-3"
+              onClick={generateSummary}
+              disabled={loadingSummary}
+            >
+              {loadingSummary ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2"></span>
+                  Generating...
+                </>
+              ) : (
+                "Refresh Summary"
+              )}
+            </button>
+          </>
+
+              )}
+            </div>
+          </div>
+
+            </div>
+            
 
             <div className="row" style={{margin:"1% 2%"}}>
               <div className="col-md-12 mb-4">

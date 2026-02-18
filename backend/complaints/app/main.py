@@ -35,6 +35,7 @@ from app.routes.resolved import router as resolved_router
 from app.routes.register import router as register_router
 from app.routes.complaint_register import router as complaint_register_router
 from app.routes.update_consumer import router as update_consumer_router
+from app.routes.admin_summary import router as admin_summary_router
 
 app.include_router(feedback_router)
 app.include_router(login_router)
@@ -44,3 +45,4 @@ app.include_router(resolved_router)
 app.include_router(register_router)
 app.include_router(complaint_register_router)
 app.include_router(update_consumer_router)
+app.include_router(admin_summary_router)
