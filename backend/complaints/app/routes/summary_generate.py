@@ -5,7 +5,7 @@ from pydantic import BaseModel
 import re
 from dotenv import load_dotenv
 import os
-import google.generativeai as genai
+from google import genai
 
 # ================= LOAD ENV =================
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -18,8 +18,7 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 if not GEMINI_API_KEY:
     raise ValueError("❌ GEMINI_API_KEY not found in .env")
 
-genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel(GEMINI_MODEL)
+client = genai.Client(api_key=GEMINI_API_KEY)
 
 # ================= PATHS =================
 BASE2_DIR = Path(__file__).resolve().parent.parent
@@ -48,68 +47,106 @@ def clean_text(text: str) -> str:
 # ================= PROMPT =================
 def build_prompt(product, complaints_text):
     return f"""
-You are acting as a business analyst reviewing customer feedback.
+You are a senior business analyst.
 
-Context:
-The following text contains multiple cleaned customer complaints related to the product category "{product}".
+You are given a large set of real customer complaints for the product category: "{product}".
+
+Each complaint represents a real operational failure.
+
+YOUR GOAL:
+Extract deep, recurring, business-level problem themes — NOT generic summaries.
+
+STRICT INSTRUCTIONS:
+
+Each bullet point MUST:
+- be 18–30 words long
+- describe the ROOT operational issue
+- mention the affected process
+- be written in professional business language
+- be complete sentences
+
+Key Issues:
+- exactly 4 bullets
+
+Recommended Actions:
+- exactly 4 bullets
+- each action must directly solve the matching issue
+- must be specific and implementable
+- complete sentences
+
+Do not stop mid-sentence.
 
 Customer Complaints:
 {complaints_text}
-
-Task:
-1. Identify recurring operational and service issues.
-2. Rewrite them in clear professional business language.
-3. Do NOT include legal language or names.
-4. Do NOT mention individual complaints.
-
-Output Format:
-
-Key Issues:
-- 3-4 concise bullet points
-
-Recommended Actions:
-- 3-4 concise bullet points
 """
 
 
 # ================= OUTPUT PARSER =================
 def split_summary(text):
-    key_match = re.search(r"Key Issues:(.*?)(Recommended Actions:|$)", text, re.S)
-    rec_match = re.search(r"Recommended Actions:(.*)", text, re.S)
 
-    key_issues = key_match.group(1).strip() if key_match else ""
-    recommended = rec_match.group(1).strip() if rec_match else ""
+    text = clean_model_output(text)
 
-    return key_issues, recommended
+    if "Recommended Actions:" not in text:
+        raise HTTPException(500, "Structured sections missing")
+
+    parts = text.split("Recommended Actions:")
+
+    key_issues = parts[0].replace("Key Issues:", "").strip()
+    actions = parts[1].strip()
+
+    return key_issues, actions
 
 
 def normalize_bullets(text):
     lines = [
-        re.sub(r"^[-•\d.\s]+", "", l).strip()
+        re.sub(r"^[-•\d.*\s]+", "", l).strip()
         for l in text.split("\n") if l.strip()
     ]
     return " | ".join(lines)
 
+def clean_model_output(text: str) -> str:
+
+    # Remove anything before "Key Issues:"
+    key_index = text.find("Key Issues:")
+    if key_index != -1:
+        text = text[key_index:]
+
+    # Remove markdown bold and extra symbols
+    text = re.sub(r"\*\*", "", text)
+    text = re.sub(r"\*", "", text)
+    text = re.sub(r"#+", "", text)
+
+    # Remove multiple blank lines
+    text = re.sub(r"\n\s*\n", "\n", text)
+
+    return text.strip()
+
 
 # ================= GEMINI CALL =================
-def call_gemini(prompt: str) -> str:
-    try:
-        response = model.generate_content(
-            prompt,
-            generation_config={
+def call_gemini(prompt: str, retries=3):
+
+    for _ in range(retries):
+
+        response = client.models.generate_content(
+            model=GEMINI_MODEL,
+            contents=prompt,
+            config={
                 "temperature": 0.2,
-                "max_output_tokens": 900,
+                "max_output_tokens": 1800,
                 "top_p": 0.9,
             }
         )
 
-        if not response or not response.text:
-            raise Exception("Empty Gemini response")
+        try:
+            text = response.candidates[0].content.parts[0].text.strip()
+        except:
+            text = ""
 
-        return response.text.strip()
+        # Only check structure presence (not ending character)
+        if "Key Issues:" in text and "Recommended Actions:" in text:
+            return text
 
-    except Exception as e:
-        raise HTTPException(500, f"Gemini API error → {str(e)}")
+    raise HTTPException(500, "Model returned incomplete structured output")
 
 
 # ================= ROUTE =================
@@ -132,6 +169,7 @@ def generate_summary(req: SummaryRequest):
         raise HTTPException(400, "Not enough complaints")
 
     complaints = df["Consumer complaint narrative"].tolist()
+
     cleaned = [
         clean_text(c) for c in complaints
         if len(str(c).split()) > 20
@@ -140,22 +178,25 @@ def generate_summary(req: SummaryRequest):
     if len(cleaned) < 20:
         raise HTTPException(400, "Not enough meaningful complaints")
 
-    # ---------- LIMIT INPUT SIZE ----------
-    # To avoid token overflow, cap at 300 complaints
-    cleaned = cleaned[:300]
+    # ✅ TOKEN SAFE LIMIT
+    cleaned = cleaned[:120]
 
     complaints_text = "\n\n".join(cleaned)
 
-    # ---------- SINGLE FINAL CALL ----------
+    # ---------- MODEL CALL ----------
     final_summary = call_gemini(build_prompt(product, complaints_text))
 
-    key_issues, recommended = split_summary(final_summary)
+    print("\n===== GEMINI RAW OUTPUT =====\n")
+    print(final_summary)
+    print("\n=============================\n")
+
+    key_issues, actions = split_summary(final_summary)
 
     # ---------- SAVE ----------
     new_row = pd.DataFrame([{
         "product_category": product,
         "Key_Issues": normalize_bullets(key_issues),
-        "Recommended_Actions": normalize_bullets(recommended)
+        "Recommended_Actions": normalize_bullets(actions)
     }])
 
     if SUMMARY_CSV.exists():
@@ -172,5 +213,5 @@ def generate_summary(req: SummaryRequest):
     return {
         "product": product,
         "Key_Issues": key_issues,
-        "Recommended_Actions": recommended
+        "Recommended_Actions": actions
     }
