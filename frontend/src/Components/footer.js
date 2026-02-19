@@ -5,11 +5,11 @@ function Footer() {
     <>
       <div className="foot">
         <img
-          src="https://i.postimg.cc/JHJ6bLJZ/your-image-name.png"
+          src="https://i.postimg.cc/gxK1QfV8/logo.png"
           alt="Footer Logo"
           className="footer-logo"
         />
-        <p>Made with 💖 by Fixyltics Team</p>
+        <p>Made with 💖 by Complaint360 Team</p>
       </div>
     </>
   )

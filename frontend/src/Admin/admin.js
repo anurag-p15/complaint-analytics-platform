@@ -278,7 +278,7 @@ useEffect(() => {
       <div className="container my-4">
         <div
           className="card p-4 shadow"
-          style={{ backgroundColor: "rgb(0, 96, 106)" }}
+          style={{ backgroundColor: "rgb(38, 41, 55)" }}
         >
           <h3 className="text-white text-center mb-4">
             Admin Complaint Dashboard

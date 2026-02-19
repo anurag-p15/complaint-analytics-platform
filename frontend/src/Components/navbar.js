@@ -18,11 +18,11 @@ useEffect(() => {
     <>
       <nav
         className="navbar navbar-expand-lg navbar-dark shadow py-0"
-        style={{ backgroundColor: '#000000' }}
+        style={{ backgroundColor: 'rgb(230, 230, 230)' }}
       >
         <a className="navbar-brand d-flex align-items-center py-0" href="/">
           <img
-            src="https://i.postimg.cc/JHJ6bLJZ/your-image-name.png"
+            src="https://i.postimg.cc/gxK1QfV8/logo.png"
             alt="Navbar Logo"
             height="80"
             className="me-2"
@@ -41,13 +41,13 @@ useEffect(() => {
         <div className="collapse navbar-collapse" id="navbarSupportedContent">
           <ul className="navbar-nav ms-auto fs-5 align-items-center">
             <li className="nav-item">
-              <a className="nav-link text-white mx-4" href="/">Home</a>
+              <a className="nav-link text-dark mx-4" href="/">Home</a>
             </li>
             {isLoggedIn ? (
   <>
     <li className="nav-item">
       <a
-        className="nav-link text-white mx-3"
+        className="nav-link text-dark mx-3"
         href={role === "admin" ? "/admin" : "/user"}
       >
         Dashboard
@@ -56,7 +56,7 @@ useEffect(() => {
 
     <li className="nav-item">
       <button
-        className="btn btn-link nav-link text-white mx-3"
+        className="btn btn-link nav-link text-dark mx-3"
         onClick={() => {
           localStorage.clear();
           window.location.href = "/login";
@@ -68,7 +68,7 @@ useEffect(() => {
   </>
 ) : (
   <li className="nav-item">
-    <a className="nav-link text-white mx-4" href="/login">Login</a>
+    <a className="nav-link text-dark mx-4" href="/login">Login</a>
   </li>
 )}
           </ul>
