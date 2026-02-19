@@ -165,20 +165,19 @@ def generate_summary(req: SummaryRequest):
     df = df.dropna(subset=["Consumer complaint narrative"])
     df = df[df["Consumer complaint narrative"].astype(str).str.strip() != ""]
 
-    if len(df) < 20:
+    if len(df) < 0:
         raise HTTPException(400, "Not enough complaints")
 
     complaints = df["Consumer complaint narrative"].tolist()
 
     cleaned = [
         clean_text(c) for c in complaints
-        if len(str(c).split()) > 20
+        if len(str(c).split()) > 0
     ]
 
-    if len(cleaned) < 20:
+    if len(cleaned) < 0:
         raise HTTPException(400, "Not enough meaningful complaints")
 
-    # ✅ TOKEN SAFE LIMIT
     cleaned = cleaned[:120]
 
     complaints_text = "\n\n".join(cleaned)
