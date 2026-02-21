@@ -98,6 +98,7 @@
                   <option>Payday loan</option>
                   <option>Telecommunications debt</option>
                   <option>VA mortgage</option>
+                  <option>Credit Reporting-Incorrect Information on Report</option>
                   <option>Federal student loan servicing</option>
                   <option>Credit repair services</option>
                   <option>International money transfer</option>
@@ -167,6 +168,7 @@
                 <label className="form-label">Company</label>
                 <select name="company" className="form-select" required>
                   <option value="">Select company</option>
+                  <option>ABC Collections, Inc.</option>
                   <option>Credit Service International Corp</option>
                   <option>Capital One</option>
                   <option>JPMorgan Chase & Co.</option>

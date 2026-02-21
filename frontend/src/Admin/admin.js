@@ -9,10 +9,10 @@ import {
   Tooltip,
   CartesianGrid,
   ResponsiveContainer,
-  Legend,LineChart,
+  Legend,
+  LineChart,
   Line,
 } from "recharts";
-
 
 /* ===== PRODUCT OPTIONS ===== */
 const productOptions = [
@@ -41,9 +41,16 @@ function Admin() {
   const [activeTab, setActiveTab] = useState("Pending");
   const [selectedProduct, setSelectedProduct] = useState("");
   const [selectedEscalation, setSelectedEscalation] = useState("");
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [showComplaintModal, setShowComplaintModal] = useState(false);
+  const [complaintText, setComplaintText] = useState("");
+  const [selectedYear, setSelectedYear] = useState("All");
+  const [summary, setSummary] = useState(null);
+  const [loadingSummary, setLoadingSummary] = useState(false);
+  const [summaryView, setSummaryView] = useState("issues");
 
-  const complaintsPerPage = 25;
+  const complaintsPerPage = 15;
 
   /* ===== FETCH DATA ===== */
   const fetchComplaints = async () => {
@@ -135,53 +142,50 @@ function Admin() {
     );
   }, [filteredData]);
 
+  /* ===== COMPLAINT TREND DATA ===== */
+  const complaintTrendData = useMemo(() => {
+    const weekCounts = {};
 
-//Date filter chart
-const [selectedYear, setSelectedYear] = useState("All");
- const complaintTrendData = useMemo(() => {
-  const weekCounts = {};
+    filteredData.forEach(c => {
+      const rawDate = c["Date received"];
+      if (!rawDate) return;
 
-  filteredData.forEach(c => {
-    const rawDate = c["Date received"];
-    if (!rawDate) return;
+      // Convert dd-mm-yyyy → yyyy-mm-dd
+      const [day, month, year] = rawDate.split("-");
+      const dateObj = new Date(`${year}-${month}-${day}`);
 
-    // Convert dd-mm-yyyy → yyyy-mm-dd
-    const [day, month, year] = rawDate.split("-");
-    const dateObj = new Date(`${year}-${month}-${day}`);
+      if (isNaN(dateObj.getTime())) return;
 
-    if (isNaN(dateObj.getTime())) return;
+      const complaintYear = dateObj.getFullYear();
 
-    const complaintYear = dateObj.getFullYear();
+      if (
+        selectedYear !== "All" &&
+        complaintYear !== Number(selectedYear)
+      ) return;
 
-    if (
-      selectedYear !== "All" &&
-      complaintYear !== Number(selectedYear)
-    ) return;
+      // Week calculation
+      const oneJan = new Date(complaintYear, 0, 1);
+      const numberOfDays = Math.floor(
+        (dateObj - oneJan) / (24 * 60 * 60 * 1000)
+      );
 
-    // Week calculation
-    const oneJan = new Date(complaintYear, 0, 1);
-    const numberOfDays = Math.floor(
-      (dateObj - oneJan) / (24 * 60 * 60 * 1000)
-    );
+      const week = Math.ceil(
+        (numberOfDays + oneJan.getDay() + 1) / 7
+      );
 
-    const week = Math.ceil(
-      (numberOfDays + oneJan.getDay() + 1) / 7
-    );
+      const weekKey = `${complaintYear}-W${String(week).padStart(2, "0")}`;
 
-    const weekKey = `${complaintYear}-W${String(week).padStart(2, "0")}`;
+      weekCounts[weekKey] =
+        (weekCounts[weekKey] || 0) + 1;
+    });
 
-    weekCounts[weekKey] =
-      (weekCounts[weekKey] || 0) + 1;
-  });
-
-  return Object.entries(weekCounts)
-    .map(([week, count]) => ({
-      week,
-      count
-    }))
-    .sort((a, b) => a.week.localeCompare(b.week));
-}, [filteredData, selectedYear]);
-
+    return Object.entries(weekCounts)
+      .map(([week, count]) => ({
+        week,
+        count
+      }))
+      .sort((a, b) => a.week.localeCompare(b.week));
+  }, [filteredData, selectedYear]);
 
   /* ===== PAGINATION ===== */
   const totalPages = Math.ceil(
@@ -213,63 +217,57 @@ const [selectedYear, setSelectedYear] = useState("All");
     }
   };
 
-  ///API call to fetch summary for a complaint
-  const [summary, setSummary] = useState(null);
-  const [loadingSummary, setLoadingSummary] = useState(false);
-  const [summaryView, setSummaryView] = useState("issues");
-
+  /* ===== GENERATE SUMMARY ===== */
   const generateSummary = async () => {
+    if (!selectedProduct) return;
 
-  if (!selectedProduct) return;
+    setLoadingSummary(true);
 
-  setLoadingSummary(true);
+    try {
+      const res = await fetch("http://127.0.0.1:8000/generate-summary", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ product: selectedProduct })
+      });
 
-  try {
-    const res = await fetch("http://127.0.0.1:8000/generate-summary", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ product: selectedProduct })
-    });
+      const data = await res.json();
 
-    const data = await res.json();
+      if (res.ok) setSummary(data);
+      else alert(data.detail);
 
-    if (res.ok) setSummary(data);
-    else alert(data.detail);
-
-  } catch (err) {
-    console.error(err);
-  }
-
-  setLoadingSummary(false);
-};
-
-useEffect(() => {
-
-  if (!selectedProduct) return;
-
-  const fetchSummary = async () => {
-  try {
-    const res = await fetch(
-      "http://127.0.0.1:8000/get-summary/" + selectedProduct
-    );
-
-    if (!res.ok) {
-      setSummary(null);
-      return;
+    } catch (err) {
+      console.error(err);
     }
 
-    const data = await res.json();
-    setSummary(data);
+    setLoadingSummary(false);
+  };
 
-  } catch (err) {
-    console.error(err);
-    setSummary(null);
-  }
-};
+  /* ===== FETCH SUMMARY ===== */
+  useEffect(() => {
+    if (!selectedProduct) return;
 
-  fetchSummary();
+    const fetchSummary = async () => {
+      try {
+        const res = await fetch(
+          `http://127.0.0.1:8000/get-summary/${selectedProduct}`
+        );
 
-}, [selectedProduct]);
+        if (!res.ok) {
+          setSummary(null);
+          return;
+        }
+
+        const data = await res.json();
+        setSummary(data);
+
+      } catch (err) {
+        console.error(err);
+        setSummary(null);
+      }
+    };
+
+    fetchSummary();
+  }, [selectedProduct]);
 
   return (
     <>
@@ -286,7 +284,6 @@ useEffect(() => {
 
           {/* ===== FILTERS ===== */}
           <div className="d-flex flex-wrap gap-3 mb-4 align-items-center">
-
             <div className="btn-group">
               <button
                 className={`btn ${
@@ -315,9 +312,7 @@ useEffect(() => {
               className="form-select ms-auto"
               style={{ maxWidth: "420px" }}
               value={selectedProduct}
-              onChange={e =>
-                setSelectedProduct(e.target.value)
-              }
+              onChange={e => setSelectedProduct(e.target.value)}
             >
               <option value="">Select product</option>
               {productOptions.map(p => (
@@ -329,9 +324,7 @@ useEffect(() => {
               className="form-select"
               style={{ maxWidth: "220px" }}
               value={selectedEscalation}
-              onChange={e =>
-                setSelectedEscalation(e.target.value)
-              }
+              onChange={e => setSelectedEscalation(e.target.value)}
             >
               <option value="">All Escalations</option>
               <option value="Low">Low</option>
@@ -349,6 +342,7 @@ useEffect(() => {
                   <th>User</th>
                   <th>Product</th>
                   <th>Issue</th>
+                  <th>Complaint Text</th>
                   <th>Escalation</th>
                   <th>Action</th>
                 </tr>
@@ -357,7 +351,7 @@ useEffect(() => {
               <tbody>
                 {paginatedData.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="text-center py-4">
+                    <td colSpan="7" className="text-center py-4">
                       No complaints found.
                     </td>
                   </tr>
@@ -368,6 +362,17 @@ useEffect(() => {
                       <td>{c["UserId"]}</td>
                       <td>{c["Product"]}</td>
                       <td>{c["Issue"]}</td>
+                      <td>
+                        <button
+                          className="btn btn-sm btn-outline-primary"
+                          onClick={() => {
+                            setComplaintText(c["Consumer complaint narrative"]);
+                            setShowComplaintModal(true);
+                          }}
+                        >
+                          View Complaint
+                        </button>
+                      </td>
                       <td>
                         <span className={`badge ${
                           c["Escalation_label"] === "High"
@@ -383,11 +388,7 @@ useEffect(() => {
                         {c["Resolved"] !== "Yes" ? (
                           <button
                             className="btn btn-sm btn-success"
-                            onClick={() =>
-                              markAsResolved(
-                                c["Complaint ID"]
-                              )
-                            }
+                            onClick={() => markAsResolved(c["Complaint ID"])}
                           >
                             Mark Resolved
                           </button>
@@ -402,37 +403,68 @@ useEffect(() => {
                 )}
               </tbody>
             </table>
+            
             {totalPages > 1 && (
-  <div className="d-flex justify-content-center mt-3 gap-2 flex-wrap">
-    {Array.from({ length: totalPages }, (_, index) => (
-      <button
-        key={index}
-        className={`btn btn-sm ${
-          currentPage === index + 1
-            ? "btn-dark"
-            : "btn-outline-dark"
-        }`}
-        onClick={() => setCurrentPage(index + 1)}
-      >
-        {index + 1}
-      </button>
-    ))}
-  </div>
-)}
-
+              <div className="d-flex justify-content-center mt-3 gap-2 flex-wrap">
+                {Array.from({ length: totalPages }, (_, index) => (
+                  <button
+                    key={index}
+                    className={`btn btn-sm ${
+                      currentPage === index + 1
+                        ? "btn-dark"
+                        : "btn-outline-dark"
+                    }`}
+                    onClick={() => setCurrentPage(index + 1)}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
+        </div>
       </div>
-    </div>
+
+      {/* ===== COMPLAINT MODAL ===== */}
+      {showComplaintModal && (
+        <div className="modal show d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Complaint Text</h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  onClick={() => setShowComplaintModal(false)}
+                ></button>
+              </div>
+              <div className="modal-body">
+                <p>{complaintText || "No complaint text available"}</p>
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setShowComplaintModal(false)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ===== ANALYTICS ===== */}
-      <div className="container-fluid" style={{borderTop:"5px solid black",marginBottom:"30px"}}>    
-        <h2 style={{marginTop:"30px"}}>Visuals at a Snapshot !! </h2>
+      <div className="container-fluid" style={{ borderTop: "5px solid black", marginBottom: "30px" }}>
+        <h2 style={{ marginTop: "30px" }}>Visuals at a Snapshot !!</h2>
         {filteredData.length > 0 && (
           <div className="mt-5">
             <h4 className="text-white mb-4">
               Complaint Analytics
             </h4>
 
-            <div className="row" style={{margin:"1% 2%"}}>
+            <div className="row" style={{ margin: "1% 2%" }}>
               <div className="col-md-12 mb-4">
                 <div className="card p-3 shadow">
                   <h5 className="text-center mb-3">
@@ -456,7 +488,7 @@ useEffect(() => {
               </div>
             </div>
 
-            <div className="row" style={{margin:"1% 2%"}}>
+            <div className="row" style={{ margin: "1% 2%" }}>
               <div className="col-md-7 mb-4">
                 <div className="card p-3 shadow">
                   <h5 className="text-center mb-3">
@@ -479,111 +511,105 @@ useEffect(() => {
                 </div>
               </div>
 
-            <div className="col-md-5 mb-4">
-                        <div
-                        className="card p-3 shadow d-flex flex-column"
-                        style={{ height: "52vh" }}
+              <div className="col-md-5 mb-4">
+                <div
+                  className="card p-3 shadow d-flex flex-column"
+                  style={{ height: "52vh" }}
+                >
+                  <h5 className="text-center mb-3">Summary of Complaints</h5>
+
+                  {!selectedProduct ? (
+                    <div className="text-center my-auto">
+                      <p>Select a product to generate summary</p>
+                    </div>
+                  ) : (
+                    <>
+                      {/* 🔹 TOGGLE BUTTONS */}
+                      <div className="d-flex justify-content-center gap-2 mb-2">
+                        <button
+                          className={`btn btn-sm ${
+                            summaryView === "issues"
+                              ? "btn-primary"
+                              : "btn-outline-primary"
+                          }`}
+                          onClick={() => setSummaryView("issues")}
                         >
-                        <h5 className="text-center mb-3">Summary of Complaints</h5>
+                          Issues
+                        </button>
 
-                        {!selectedProduct ? (
+                        <button
+                          className={`btn btn-sm ${
+                            summaryView === "insights"
+                              ? "btn-primary"
+                              : "btn-outline-primary"
+                          }`}
+                          onClick={() => setSummaryView("insights")}
+                        >
+                          Insights
+                        </button>
+                      </div>
 
-                          <div className="text-center my-auto">
-                            <p>Select a product to generate summary</p>
-                          </div>
+                      {/* 🔹 SCROLLABLE CONTENT */}
+                      <div style={{ overflowY: "auto", flexGrow: 1 }}>
+                        {summary && summaryView === "issues" && (
+                          <pre style={{ whiteSpace: "pre-wrap" }}>
+                            {summary.Key_Issues}
+                          </pre>
+                        )}
 
-                        ) : (
+                        {summary && summaryView === "insights" && (
+                          <pre style={{ whiteSpace: "pre-wrap" }}>
+                            {summary.Recommended_Actions}
+                          </pre>
+                        )}
 
+                        {!summary && (
+                          <p className="text-center text-muted">
+                            No summary available. Click refresh to generate.
+                          </p>
+                        )}
+                      </div>
+
+                      {/* 🔹 BUTTON AT BOTTOM */}
+                      <button
+                        className="btn btn-primary mt-3"
+                        onClick={generateSummary}
+                        disabled={loadingSummary}
+                      >
+                        {loadingSummary ? (
                           <>
-            {/* 🔹 TOGGLE BUTTONS */}
-            <div className="d-flex justify-content-center gap-2 mb-2">
-              <button
-                className={`btn btn-sm ${
-                  summaryView === "issues"
-                    ? "btn-primary"
-                    : "btn-outline-primary"
-                }`}
-                onClick={() => setSummaryView("issues")}
-              >
-                Issues
-              </button>
-
-              <button
-                className={`btn btn-sm ${
-                  summaryView === "insights"
-                    ? "btn-primary"
-                    : "btn-outline-primary"
-                }`}
-                onClick={() => setSummaryView("insights")}
-              >
-                Insights
-              </button>
+                            <span className="spinner-border spinner-border-sm me-2"></span>
+                            Generating...
+                          </>
+                        ) : (
+                          "Refresh Summary"
+                        )}
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
 
-            {/* 🔹 SCROLLABLE CONTENT */}
-            <div style={{ overflowY: "auto", flexGrow: 1 }}>
-
-              {summary && summaryView === "issues" && (
-                <>
-                  <pre style={{ whiteSpace: "pre-wrap" }}>
-                    {summary.Key_Issues}
-                  </pre>
-                </>
-              )}
-
-              {summary && summaryView === "insights" && (
-                <>
-                  <pre style={{ whiteSpace: "pre-wrap" }}>
-                    {summary.Recommended_Actions}
-                  </pre>
-                </>
-              )}
-
-            </div>
-
-            {/* 🔹 BUTTON AT BOTTOM */}
-            <button
-              className="btn btn-primary mt-3"
-              onClick={generateSummary}
-              disabled={loadingSummary}
-            >
-              {loadingSummary ? (
-                <>
-                  <span className="spinner-border spinner-border-sm me-2"></span>
-                  Generating...
-                </>
-              ) : (
-                "Refresh Summary"
-              )}
-            </button>
-          </>
-
-              )}
-            </div>
-          </div>
-
-            </div>
-            
-
-            <div className="row" style={{margin:"1% 2%"}}>
+            <div className="row" style={{ margin: "1% 2%" }}>
               <div className="col-md-12 mb-4">
                 <div className="card p-3 shadow">
                   <h5 className="text-center mb-3">
                     Complaint Trend
                   </h5>
                   <div className="d-flex justify-content-center mb-3 gap-2">
-                      {["All", "2024", "2025", "2026"].map((year) => (
-                        <button
-                          key={year}
-                          className={`btn btn-sm ${
-                            selectedYear === year ? "btn-primary" : "btn-outline-primary"
-                          }`}
-                          onClick={() => setSelectedYear(year)}
-                        >
-                          {year}
-                        </button>
-                      ))}
-                    </div>
+                    {["All", "2024", "2025", "2026"].map((year) => (
+                      <button
+                        key={year}
+                        className={`btn btn-sm ${
+                          selectedYear === year ? "btn-primary" : "btn-outline-primary"
+                        }`}
+                        onClick={() => setSelectedYear(year)}
+                      >
+                        {year}
+                      </button>
+                    ))}
+                  </div>
                   <ResponsiveContainer width="100%" height={350}>
                     <LineChart data={complaintTrendData}>
                       <CartesianGrid strokeDasharray="3 3" />

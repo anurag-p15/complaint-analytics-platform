@@ -109,7 +109,7 @@ function Body() {
       <section className="features-section">
         <div className="section-header">
           <span className="section-subtitle">POWERED BY AI & ML</span>
-          <h2>Intelligent Complaint Management</h2>
+          <h2>Complaint360</h2>
           <p>Advanced analytics and machine learning to transform customer feedback into action</p>
         </div>
         

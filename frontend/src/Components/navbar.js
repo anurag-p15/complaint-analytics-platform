@@ -24,7 +24,7 @@ useEffect(() => {
           <img
             src="https://i.postimg.cc/gxK1QfV8/logo.png"
             alt="Navbar Logo"
-            height="80"
+            height="100vh"
             className="me-2"
           />
         </a>
